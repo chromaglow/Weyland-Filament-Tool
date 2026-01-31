@@ -8,7 +8,7 @@ A powerful tool to research 3D printer filament settings and generate complete B
 
 [![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey.svg)](https://github.com/chromaglow/bambu-filament-tool)
+[![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey.svg)](https://github.com/chromaglow/Weyland-Filament-Tool)
 
 </div>
 
@@ -29,7 +29,7 @@ A powerful tool to research 3D printer filament settings and generate complete B
 
 1. **Clone the repository**
 ```bash
-git clone https://github.com/chromaglow/bambu-filament-tool.git
+git clone https://github.com/chromaglow/Weyland-Filament-Tool.git
 cd bambu-filament-tool
 ```
 
@@ -208,7 +208,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📧 Contact
 
-Project Link: [https://github.com/chromaglow/bambu-filament-tool](https://github.com/chromaglow/bambu-filament-tool)
+Project Link: [https://github.com/chromaglow/Weyland-Filament-Tool](https://github.com/chromaglow/Weyland-Filament-Tool)
 
 ---
 
