@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import List, Optional, Dict, Any
 
 from src.data.models import FilamentProfile, MaterialSettings, ScrapedData
+from src.data.comparison import ProfileComparator, ComparisonResult
 from src.generator.templates import get_template_manager
 from src.generator.id_generator import get_id_generator
 from src.utils.logger import get_logger
@@ -24,6 +25,8 @@ class ProfileBuilder:
         self.template_manager = get_template_manager()
         self.id_generator = get_id_generator()
         self.config = get_config()
+        self.comparator = ProfileComparator()
+        self.last_comparison: Optional[ComparisonResult] = None
 
     def build_profile(
         self,
@@ -47,6 +50,15 @@ class ProfileBuilder:
             Complete FilamentProfile object
         """
         logger.info(f"Building profile: {name} ({material_type})")
+
+        # Compare and merge scraped data if multiple sources
+        if scraped_data and len(scraped_data) > 1:
+            comparison = self.comparator.compare_profiles(scraped_data)
+            self.last_comparison = comparison
+            logger.info(f"Compared {len(scraped_data)} sources, found {len(comparison.conflicts)} conflicts")
+            scraped_data = [comparison.merged_data]  # Use merged data
+        elif scraped_data:
+            self.last_comparison = None
 
         # Get base template
         template = self.template_manager.get_template(material_type)

@@ -5,11 +5,12 @@ Main window for Bambu Filament Profile Generator
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 from pathlib import Path
-from typing import Optional
+from typing import Optional, List
 
 from src.generator.profile_builder import ProfileBuilder
 from src.scrapers.filament_profiles_scraper import FilamentProfilesScraper
-from src.data.models import FilamentProfile
+from src.scrapers.github_scraper import GitHubScraper
+from src.data.models import FilamentProfile, ScrapedData
 from src.utils.logger import get_logger
 
 logger = get_logger()
@@ -32,10 +33,14 @@ class BambuFilamentApp:
         # Apply DOS-style theme
         self._apply_dos_theme()
 
-        # Initialize builder and scraper
+        # Initialize builder and scrapers
         self.profile_builder = ProfileBuilder()
-        self.scraper = FilamentProfilesScraper()
+        self.scrapers = [
+            FilamentProfilesScraper(),
+            GitHubScraper()
+        ]
         self.current_profile: Optional[FilamentProfile] = None
+        self.all_scraped_data: List[ScrapedData] = []
 
         # Build UI
         self._build_ui()
@@ -229,14 +234,24 @@ class BambuFilamentApp:
             if color:
                 profile_name += f" {color}"
 
-            # Search for data (currently returns placeholder)
+            # Search for data from all sources
             logger.info(f"Searching for filament data: {profile_name}")
-            scraped_data = self.scraper.search(
-                manufacturer=manufacturer,
-                material_type=material_type,
-                material_name=material_name,
-                color=color
-            )
+            scraped_data = []
+            for scraper in self.scrapers:
+                try:
+                    results = scraper.search(
+                        manufacturer=manufacturer,
+                        material_type=material_type,
+                        material_name=material_name,
+                        color=color
+                    )
+                    scraped_data.extend(results)
+                    logger.info(f"{scraper.get_source_name()}: Found {len(results)} profiles")
+                except Exception as e:
+                    logger.error(f"Error with {scraper.get_source_name()}: {e}")
+
+            self.all_scraped_data = scraped_data
+            logger.info(f"Total profiles found: {len(scraped_data)}")
 
             # Build profile
             self.current_profile = self.profile_builder.build_profile(
@@ -256,7 +271,22 @@ class BambuFilamentApp:
             self.import_btn.config(state=tk.NORMAL)
             self.status_var.set(f"Profile generated: {profile_name}")
 
-            messagebox.showinfo("Success", f"Profile generated successfully!\n\nID: {self.current_profile.filament_id}")
+            # Show comparison results if available
+            success_msg = f"Profile generated successfully!\n\n"
+            success_msg += f"ID: {self.current_profile.filament_id}\n"
+            success_msg += f"Sources: {len(scraped_data)} profiles found\n"
+
+            if self.profile_builder.last_comparison:
+                comparison = self.profile_builder.last_comparison
+                success_msg += f"Conflicts: {len(comparison.conflicts)}\n"
+                if comparison.conflicts:
+                    success_msg += "\nClick output to see conflict details"
+
+            messagebox.showinfo("Success", success_msg)
+
+            # Show conflicts in output if any
+            if self.profile_builder.last_comparison and self.profile_builder.last_comparison.conflicts:
+                self._show_comparison_results()
 
             # Auto-import if enabled
             if self.auto_import_var.get():
@@ -314,3 +344,44 @@ class BambuFilamentApp:
             logger.error(f"Failed to import profile: {e}")
             messagebox.showerror("Error", f"Failed to import profile:\n{str(e)}")
             self.status_var.set("Error")
+
+    def _show_comparison_results(self):
+        """Display comparison results and conflicts"""
+        if not self.profile_builder.last_comparison:
+            return
+
+        comparison = self.profile_builder.last_comparison
+
+        # Prepend comparison info to the output
+        import json
+        output = "=" * 70 + "\n"
+        output += "PROFILE COMPARISON RESULTS\n"
+        output += "=" * 70 + "\n\n"
+        output += f"Sources analyzed: {comparison.sources_count}\n"
+        output += f"Average confidence: {comparison.avg_confidence:.1%}\n"
+        output += f"Conflicts found: {len(comparison.conflicts)}\n\n"
+
+        if comparison.conflicts:
+            output += "-" * 70 + "\n"
+            output += "CONFLICTS AND RESOLUTIONS\n"
+            output += "-" * 70 + "\n\n"
+
+            for i, conflict in enumerate(comparison.conflicts, 1):
+                output += f"{i}. {conflict.setting_name.upper()}\n"
+                output += f"   Recommended: {conflict.recommended_value}\n\n"
+                output += f"   Values from sources:\n"
+                for value, source, confidence in conflict.values:
+                    output += f"     • {value:>5} from {source:<30} (confidence: {confidence:.0%})\n"
+                output += f"\n   Resolution: {conflict.reason}\n\n"
+
+        output += "=" * 70 + "\n"
+        output += "GENERATED PROFILE JSON\n"
+        output += "=" * 70 + "\n\n"
+
+        # Add the JSON
+        profile_json = json.dumps(self.current_profile.to_bambu_json(), indent=2)
+        output += profile_json
+
+        # Update the output text
+        self.output_text.delete('1.0', tk.END)
+        self.output_text.insert('1.0', output)
