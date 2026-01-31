@@ -1,0 +1,56 @@
+{
+  "scraper": {
+    "user_agent": "BambuFilamentTool/1.0 (Educational Research Tool)",
+    "rate_limit_delay": 1.0,
+    "timeout": 10,
+    "max_retries": 3
+  },
+  "cache": {
+    "enabled": true,
+    "ttl_hours": 24
+  },
+  "output": {
+    "default_path": "%APPDATA%/BambuStudio/user/filament",
+    "format": "json",
+    "include_version": true
+  },
+  "materials": {
+    "pla": {
+      "filament_id_prefix": "GFL",
+      "default_inherit": "Generic PLA"
+    },
+    "petg": {
+      "filament_id_prefix": "GFG",
+      "default_inherit": "Generic PETG"
+    },
+    "abs": {
+      "filament_id_prefix": "GFA",
+      "default_inherit": "Generic ABS"
+    },
+    "tpu": {
+      "filament_id_prefix": "GFU",
+      "default_inherit": "Generic TPU"
+    }
+  },
+  "sources": {
+    "3dfilamentprofiles": {
+      "enabled": true,
+      "base_url": "https://3dfilamentprofiles.com",
+      "priority": 1
+    },
+    "bambu_wiki": {
+      "enabled": true,
+      "base_url": "https://wiki.bambulab.com",
+      "priority": 2
+    },
+    "github_repos": {
+      "enabled": true,
+      "repos": [
+        "lestephen/bambu-filament",
+        "dgauche/BambuStudioFilamentLibrary",
+        "Doridian/BambuProfiles"
+      ],
+      "priority": 3
+    }
+  }
+}
