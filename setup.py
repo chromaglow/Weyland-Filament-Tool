@@ -1,15 +1,15 @@
 """
-Bambu Studio Filament Profile Generator
+Weyland Filament Tool
 Setup configuration
 """
 
 from setuptools import setup, find_packages
 
 setup(
-    name="bambu-filament-tool",
-    version="0.1.0",
+    name="weyland-filament-tool",
+    version="1.0.0",
     description="Research and generate Bambu Studio filament profiles",
-    author="Weyland-Yutani Corporation",
+    author="Weyland-Yutani Corporation - Advanced Materials Division",
     packages=find_packages(where="src"),
     package_dir={"": "src"},
     python_requires=">=3.8",

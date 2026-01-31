@@ -1,4 +1,4 @@
-# Quick Start Guide
+# Weyland Filament Tool - Quick Start Guide
 
 ## Installation
 
@@ -14,6 +14,11 @@ pip install -r requirements.txt
 
 ```bash
 python src/main.py
+```
+
+Or use the launcher:
+```bash
+run.bat    # Windows
 ```
 
 ## Using the Application

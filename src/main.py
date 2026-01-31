@@ -1,5 +1,5 @@
 """
-Bambu Filament Profile Generator - Main Entry Point
+Weyland Filament Tool - Main Entry Point
 Research and generate Bambu Studio filament profiles
 """
 
@@ -19,7 +19,7 @@ logger = get_logger()
 
 def main():
     """
-    Main entry point for the Bambu Filament Profile Generator
+    Main entry point for the Weyland Filament Tool
     """
     # Fix for Windows Unicode printing
     if hasattr(sys.stdout, 'reconfigure'):
@@ -29,8 +29,8 @@ def main():
             pass
 
     print("=" * 70)
-    print("     BAMBU FILAMENT PROFILE GENERATOR")
-    print("     Building Better Profiles... One Filament at a Time")
+    print("     WEYLAND FILAMENT TOOL")
+    print("     Building Better Worlds... One Filament at a Time")
     print("=" * 70)
     print()
     print("Initiating profile generation system...")

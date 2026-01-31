@@ -1,5 +1,5 @@
 """
-Main window for Bambu Filament Profile Generator
+Main window for Weyland Filament Tool
 """
 
 import tkinter as tk
@@ -27,7 +27,7 @@ class BambuFilamentApp:
             root: Tkinter root window
         """
         self.root = root
-        self.root.title("Bambu Filament Profile Generator")
+        self.root.title("Weyland Filament Tool")
         self.root.geometry("800x600")
 
         # Apply DOS-style theme
@@ -72,7 +72,7 @@ class BambuFilamentApp:
         # Title
         title_label = ttk.Label(
             main_frame,
-            text="BAMBU FILAMENT PROFILE GENERATOR",
+            text="WEYLAND FILAMENT TOOL",
             style='Title.TLabel'
         )
         title_label.pack(pady=(0, 20))
