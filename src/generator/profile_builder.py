@@ -11,6 +11,7 @@ from src.generator.templates import get_template_manager
 from src.generator.id_generator import get_id_generator
 from src.utils.logger import get_logger
 from src.utils.config import get_config
+from src.utils.bambu_studio import get_bambu_integration
 
 logger = get_logger()
 
@@ -238,3 +239,68 @@ class ProfileBuilder:
         profile.settings = settings
 
         return profile
+
+    def import_to_bambu_studio(
+        self,
+        profile: FilamentProfile,
+        device_id: Optional[str] = None
+    ) -> tuple[bool, str]:
+        """
+        Save and import profile directly to Bambu Studio
+
+        Args:
+            profile: FilamentProfile to import
+            device_id: Specific device ID (uses default if None)
+
+        Returns:
+            (success, message) tuple
+        """
+        bambu = get_bambu_integration()
+
+        # Check if Bambu Studio directory exists
+        if not bambu.bambu_studio_path:
+            return (False, "Bambu Studio directory not found. Please install Bambu Studio.")
+
+        # Check for device IDs
+        if not bambu.device_ids:
+            return (False, "No Bambu Studio devices found. Please set up a printer in Bambu Studio first.")
+
+        # Save to temporary location first
+        import tempfile
+        temp_dir = Path(tempfile.gettempdir())
+        temp_path = temp_dir / f"{profile.name}.json"
+
+        try:
+            # Save profile
+            self.save_profile(profile, temp_path)
+
+            # Import to Bambu Studio
+            success = bambu.import_profile(temp_path, device_id)
+
+            if success:
+                message = f"Profile imported successfully to Bambu Studio!\n"
+                if len(bambu.device_ids) > 1:
+                    message += f"Imported to {len(bambu.device_ids)} device(s)."
+                else:
+                    message += f"Imported to device: {bambu.device_ids[0]}"
+
+                # Check if Bambu Studio is running
+                if bambu.is_bambu_studio_running():
+                    message += "\n\nNote: Bambu Studio is running. Please restart it to see the new profile."
+
+                logger.info(f"Profile imported to Bambu Studio: {profile.name}")
+                return (True, message)
+            else:
+                return (False, "Failed to import profile to Bambu Studio.")
+
+        except Exception as e:
+            logger.error(f"Error importing profile: {e}")
+            return (False, f"Error importing profile: {str(e)}")
+
+        finally:
+            # Clean up temp file
+            if temp_path.exists():
+                try:
+                    temp_path.unlink()
+                except Exception:
+                    pass

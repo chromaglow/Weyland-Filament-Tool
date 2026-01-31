@@ -150,6 +150,40 @@ class BambuFilamentApp:
         )
         self.save_btn.pack(side=tk.LEFT, padx=5)
 
+        self.import_btn = tk.Button(
+            button_frame,
+            text="[IMPORT TO BAMBU STUDIO]",
+            command=self._import_to_bambu,
+            bg='#003300',
+            fg='#00FF00',
+            font=('Courier New', 10, 'bold'),
+            activebackground='#005500',
+            activeforeground='#00FF00',
+            relief=tk.FLAT,
+            padx=20,
+            pady=10,
+            state=tk.DISABLED
+        )
+        self.import_btn.pack(side=tk.LEFT, padx=5)
+
+        # Auto-import checkbox
+        auto_import_frame = ttk.Frame(main_frame, style='DOS.TFrame')
+        auto_import_frame.pack(pady=5)
+
+        self.auto_import_var = tk.BooleanVar(value=False)
+        self.auto_import_check = tk.Checkbutton(
+            auto_import_frame,
+            text="Auto-import to Bambu Studio after generation",
+            variable=self.auto_import_var,
+            bg='#000000',
+            fg='#00FF00',
+            selectcolor='#003300',
+            activebackground='#000000',
+            activeforeground='#00FF00',
+            font=('Courier New', 9)
+        )
+        self.auto_import_check.pack()
+
         # Output text area
         output_label = ttk.Label(main_frame, text="Generated Profile:", style='DOS.TLabel')
         output_label.pack(anchor=tk.W, pady=(20, 5))
@@ -219,9 +253,14 @@ class BambuFilamentApp:
             self.output_text.insert('1.0', profile_json)
 
             self.save_btn.config(state=tk.NORMAL)
+            self.import_btn.config(state=tk.NORMAL)
             self.status_var.set(f"Profile generated: {profile_name}")
 
             messagebox.showinfo("Success", f"Profile generated successfully!\n\nID: {self.current_profile.filament_id}")
+
+            # Auto-import if enabled
+            if self.auto_import_var.get():
+                self._import_to_bambu()
 
         except Exception as e:
             logger.error(f"Failed to generate profile: {e}")
@@ -252,3 +291,26 @@ class BambuFilamentApp:
         except Exception as e:
             logger.error(f"Failed to save profile: {e}")
             messagebox.showerror("Error", f"Failed to save profile:\n{str(e)}")
+
+    def _import_to_bambu(self):
+        """Import current profile to Bambu Studio"""
+        if not self.current_profile:
+            return
+
+        self.status_var.set("Importing to Bambu Studio...")
+        self.root.update()
+
+        try:
+            success, message = self.profile_builder.import_to_bambu_studio(self.current_profile)
+
+            if success:
+                self.status_var.set("Imported to Bambu Studio")
+                messagebox.showinfo("Success", message)
+            else:
+                self.status_var.set("Import failed")
+                messagebox.showerror("Import Failed", message)
+
+        except Exception as e:
+            logger.error(f"Failed to import profile: {e}")
+            messagebox.showerror("Error", f"Failed to import profile:\n{str(e)}")
+            self.status_var.set("Error")
