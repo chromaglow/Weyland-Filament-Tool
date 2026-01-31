@@ -1,4 +1,4 @@
-# 🧬 Bambu Studio Filament Profile Generator
+# 🧬 Weyland-Filament-Tool
 
 <div align="center">
 
