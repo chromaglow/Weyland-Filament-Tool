@@ -159,7 +159,9 @@ class PoliteFetcher:
         try:
             resp = self._live(parts.netloc, robots_url)
         except FetchError:
-            return None
+            # Fail closed (the page is not fetched) but keep the real reason and type, e.g.
+            # RateLimitError; nothing is cached, so a later call retries.
+            raise
         parser = RobotFileParser()
         if resp.status == 200:
             parser.parse(resp.body.decode("utf-8", errors="replace").splitlines())

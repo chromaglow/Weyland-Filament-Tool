@@ -197,3 +197,19 @@ def test_install_refuses_while_bambu_runs(tmp_path):
                      ask=lambda q: "y", running=lambda: True)
     assert code != 0 and "running" in text
     assert not (root / "user" / "default" / "filament" / "Plant Vitamin.json").exists()
+
+
+def test_rate_limit_on_robots_is_reported_as_rate_limit(tmp_path):
+    from src.scrapers.source_community_profiles import RateLimitError
+
+    class Limited(Fake):
+        def __call__(self, url, headers, timeout):
+            if url.endswith("/robots.txt"):
+                raise RateLimitError("GitHub rate limit reached for " + url + "; resets later")
+            return super().__call__(url, headers, timeout)
+    out = []
+    code = main(research_args(tmp_path) + ["--cache-dir", str(tmp_path / "c")], transport=Limited(),
+                say=out.append, now=NOW, min_interval=0, system_dirs=[])
+    assert code != 0 and len(out) == 1
+    assert out[0].startswith("Error: rate limit reached") and "try again later" in out[0] and "robots.txt does not allow" not in out[0]
+    assert not (tmp_path / "out").exists()
