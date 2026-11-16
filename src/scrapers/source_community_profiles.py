@@ -25,7 +25,7 @@ from urllib.parse import quote, unquote, urlparse
 
 from src.data.sourced import CollectedSettings, SourceKind, SourcedValue
 from src.generator.bambu_keys import load_catalogue
-from src.scrapers.http_client import FetchError, PoliteFetcher, TransportResponse
+from src.scrapers.http_client import FetchError, PoliteFetcher, TransportResponse, open_no_redirect
 
 DEFAULT_REF = "main"
 DEFAULT_MAX_DEPTH = 8
@@ -193,7 +193,7 @@ def github_transport(env_var: str = TOKEN_ENV) -> Callable[[str, Dict[str, str],
             headers["Authorization"] = f"Bearer {token}"
         req = urllib.request.Request(url, headers=headers)
         try:
-            with urllib.request.urlopen(req, timeout=timeout) as resp:
+            with open_no_redirect(req, timeout) as resp:
                 status, body, hdrs = resp.status, resp.read(), resp.headers
         except urllib.error.HTTPError as e:
             status, body, hdrs = e.code, e.read() or b"", e.headers
@@ -206,6 +206,6 @@ def github_transport(env_var: str = TOKEN_ENV) -> Callable[[str, Dict[str, str],
                 reset = hdrs.get("X-RateLimit-Reset")
                 when = f"resets at epoch {reset}" if reset else f"retry after {retry_after}s"
                 raise RateLimitError(f"GitHub rate limit reached for {url}; {when}")
-        return TransportResponse(status, body)
+        return TransportResponse(status, body, hdrs.get("Location"))
 
     return transport

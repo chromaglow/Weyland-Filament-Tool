@@ -203,7 +203,7 @@ def test_token_from_env_sent_only_to_github_hosts(monkeypatch):
         seen.append(dict(req.header_items()))
         return FakeResp(b"{}")
 
-    monkeypatch.setattr(scp.urllib.request, "urlopen", fake_open)
+    monkeypatch.setattr(scp, "open_no_redirect", fake_open)
     monkeypatch.setenv("WFT_GITHUB_TOKEN", "sekret")
     t = github_transport()
     t("https://raw.githubusercontent.com/x/y/main/a.json", {"User-Agent": "u"}, 5)
@@ -219,8 +219,25 @@ def test_rate_limit_exhausted_raises_without_leaking_token(monkeypatch):
     def fake_open(req, timeout=None):
         return FakeResp(b"", 403, {"X-RateLimit-Remaining": "0", "X-RateLimit-Reset": "1800000000"})
 
-    monkeypatch.setattr(scp.urllib.request, "urlopen", fake_open)
+    monkeypatch.setattr(scp, "open_no_redirect", fake_open)
     monkeypatch.setenv("WFT_GITHUB_TOKEN", "sekret")
     with pytest.raises(RateLimitError) as e:
         github_transport()("https://api.github.com/x", {}, 5)
     assert "1800000000" in str(e.value) and "sekret" not in str(e.value)
+
+
+def test_token_never_forwarded_on_redirect_to_another_host(monkeypatch, tmp_path):
+    from tests.stub_server import stub_server
+    monkeypatch.setenv("WFT_GITHUB_TOKEN", "sekrit-token")
+    monkeypatch.setattr(scp, "GITHUB_HOSTS", {"127.0.0.1"})  # stand-in for a GitHub host
+    with stub_server({"/f": (200, {}, b"payload")}) as (b_url, b_seen):
+        other = b_url.replace("127.0.0.1", "localhost")  # different host, same loopback
+        with stub_server({"/robots.txt": (404, {}, b""),
+                          "/r": (302, {"Location": other + "/f"}, b"")}) as (a_url, a_seen):
+            fetcher = PoliteFetcher(cache_dir=tmp_path, min_interval=0,
+                                    transport=scp.github_transport())
+            resp = fetcher.get(a_url + "/r")
+    assert resp.body == b"payload"
+    assert a_seen[-1][1].get("authorization") == "Bearer sekrit-token"  # sent to the allowed host
+    assert all("authorization" not in h for _, h in b_seen)  # never to the other host
+    assert "sekrit-token" not in "".join(p.name + p.read_text(errors="ignore") for p in tmp_path.iterdir() if p.is_file())

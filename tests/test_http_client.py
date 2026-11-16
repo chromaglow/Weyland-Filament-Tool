@@ -216,3 +216,87 @@ def test_default_cache_dir_is_outside_repo():
 
     repo = Path(__file__).resolve().parents[1]
     assert repo not in default_cache_dir().resolve().parents
+
+
+# -- redirects: every hop is a new polite request ---------------------------
+from tests.stub_server import stub_server  # noqa: E402
+
+
+def _real_fetcher(tmp_path, clock=None, **kw):
+    clock = clock or FakeClock()
+    return PoliteFetcher(cache_dir=tmp_path, min_interval=5.0, clock=clock.time,
+                         sleep=clock.sleep, **kw), clock
+
+
+def test_redirect_target_is_robots_checked_and_rate_limited(tmp_path):
+    with stub_server({"/secret": (200, {}, b"secret"),
+                      "/robots.txt": (200, {}, b"User-agent: *\nDisallow: /secret\n")}) as (b_url, b_seen):
+        with stub_server({"/go": (302, {"Location": b_url + "/secret"}, b"")}) as (a_url, a_seen):
+            fetcher, _ = _real_fetcher(tmp_path)
+            with pytest.raises(RobotsDisallowedError):
+                fetcher.get(a_url + "/go")
+    assert [p for p, _ in b_seen] == ["/robots.txt"]  # target never fetched
+
+
+def test_redirect_to_allowed_target_is_followed_and_cached(tmp_path):
+    with stub_server({"/ok": (200, {}, b"hello")}) as (b_url, b_seen):
+        with stub_server({"/go": (301, {"Location": b_url + "/ok"}, b"")}) as (a_url, _):
+            fetcher, _ = _real_fetcher(tmp_path)
+            resp = fetcher.get(a_url + "/go")
+            assert resp.status == 200 and resp.body == b"hello"
+            assert fetcher.get(a_url + "/go").from_cache
+    assert [p for p, _ in b_seen] == ["/robots.txt", "/ok"]
+
+
+def test_redirect_hops_wait_for_per_host_interval(tmp_path):
+    clock = FakeClock()
+
+    class T:
+        def __init__(self):
+            self.calls = []
+
+        def __call__(self, url, headers, timeout):
+            self.calls.append(url)
+            if url.endswith("/robots.txt"):
+                return TransportResponse(404, b"")
+            if url.endswith("/a"):
+                return TransportResponse(302, b"", location="/b")
+            return TransportResponse(200, b"done")
+
+    t = T()
+    f = PoliteFetcher(cache_dir=tmp_path, transport=t, min_interval=5.0, clock=clock.time,
+                      sleep=clock.sleep)
+    assert f.get("https://h.example/a").body == b"done"
+    assert t.calls == ["https://h.example/robots.txt", "https://h.example/a", "https://h.example/b"]
+    assert clock.sleeps and all(s > 0 for s in clock.sleeps)  # same-host hop still waits
+
+
+def _redirecting(mapping):
+    def transport(url, headers, timeout):
+        if url.endswith("/robots.txt"):
+            return TransportResponse(404, b"")
+        if url in mapping:
+            return TransportResponse(302, b"", location=mapping[url])
+        return TransportResponse(200, b"end")
+    return transport
+
+
+def test_redirect_loop_is_a_clear_error(tmp_path):
+    t = _redirecting({"https://h.example/a": "/b", "https://h.example/b": "/a"})
+    f = PoliteFetcher(cache_dir=tmp_path, transport=t, min_interval=0)
+    with pytest.raises(FetchError, match="redirect loop"):
+        f.get("https://h.example/a")
+
+
+def test_too_many_redirect_hops_is_a_clear_error(tmp_path):
+    t = _redirecting({f"https://h.example/{i}": f"/{i + 1}" for i in range(20)})
+    f = PoliteFetcher(cache_dir=tmp_path, transport=t, min_interval=0)
+    with pytest.raises(FetchError, match="too many redirects"):
+        f.get("https://h.example/0")
+
+
+def test_redirect_to_non_http_scheme_is_refused(tmp_path):
+    t = _redirecting({"https://h.example/a": "file:///etc/passwd"})
+    f = PoliteFetcher(cache_dir=tmp_path, transport=t, min_interval=0)
+    with pytest.raises(FetchError, match="unsupported"):
+        f.get("https://h.example/a")

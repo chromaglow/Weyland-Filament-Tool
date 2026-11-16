@@ -18,7 +18,7 @@ import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Dict, Optional
-from urllib.parse import urlparse
+from urllib.parse import urljoin, urlparse
 from urllib.robotparser import RobotFileParser
 
 try:
@@ -30,6 +30,7 @@ CLIENT_NAME = "WeylandFilamentTool"
 DEFAULT_MIN_INTERVAL = 5.0
 DEFAULT_TTL = 7 * 24 * 3600
 DEFAULT_TIMEOUT = 30.0
+MAX_REDIRECTS = 5
 
 
 class FetchError(Exception):
@@ -48,6 +49,7 @@ class OfflineCacheMissError(FetchError):
 class TransportResponse:
     status: int
     body: bytes
+    location: Optional[str] = None  # Location header of a 3xx; the fetcher follows it
 
 
 @dataclass
@@ -72,14 +74,26 @@ def default_cache_dir() -> Path:
     return root / CLIENT_NAME / "http-cache"
 
 
+class _NoRedirect(urllib.request.HTTPRedirectHandler):
+    """Hand 3xx back to the caller instead of following it."""
+
+    def redirect_request(self, *args, **kwargs):
+        return None
+
+
+def open_no_redirect(req: urllib.request.Request, timeout: float):
+    """urlopen that never follows redirects: a 3xx surfaces as urllib.error.HTTPError."""
+    return urllib.request.build_opener(_NoRedirect).open(req, timeout=timeout)
+
+
 def urllib_transport(url: str, headers: Dict[str, str], timeout: float) -> TransportResponse:
-    """Default transport: plain urllib, honest headers only."""
+    """Default transport: plain urllib, honest headers only, no automatic redirects."""
     req = urllib.request.Request(url, headers=headers)
     try:
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
+        with open_no_redirect(req, timeout) as resp:
             return TransportResponse(resp.status, resp.read())
     except urllib.error.HTTPError as e:
-        return TransportResponse(e.code, e.read() or b"")
+        return TransportResponse(e.code, e.read() or b"", e.headers.get("Location"))
     except (urllib.error.URLError, OSError) as e:
         raise FetchError(f"network error for {url}: {e}") from e
 
@@ -121,14 +135,32 @@ class PoliteFetcher:
         if self.offline:
             raise OfflineCacheMissError(f"offline mode and not cached: {url}")
 
-        if not self._allowed(parts, url):
-            raise RobotsDisallowedError(f"robots.txt disallows fetching {url}")
-
-        resp = self._live(parts.netloc, url)
-        if resp.status != 200:
-            raise FetchError(f"HTTP {resp.status} for {url}")
+        resp = self._fetch_following(url)
         self._cache_write(url, resp)
         return Response(url, resp.status, resp.body, from_cache=False)
+
+    def _fetch_following(self, url: str) -> TransportResponse:
+        """Each hop (original URL and every redirect target) is a new polite request:
+        robots.txt and the per-host interval apply to it. Failing closed on loops,
+        too many hops and non-http(s) targets."""
+        seen = set()
+        for _ in range(MAX_REDIRECTS + 1):
+            if url in seen:
+                raise FetchError(f"redirect loop at {url}")
+            seen.add(url)
+            parts = urlparse(url)
+            if parts.scheme not in ("http", "https") or not parts.netloc:
+                raise FetchError(f"unsupported URL: {url}")
+            if not self._allowed(parts, url):
+                raise RobotsDisallowedError(f"robots.txt disallows fetching {url}")
+            resp = self._live(parts.netloc, url)
+            if resp.status in (301, 302, 303, 307, 308) and resp.location:
+                url = urljoin(url, resp.location)
+                continue
+            if resp.status != 200:
+                raise FetchError(f"HTTP {resp.status} for {url}")
+            return resp
+        raise FetchError(f"too many redirects (more than {MAX_REDIRECTS}) from {url}")
 
     # -- live requests ----------------------------------------------------
     def _live(self, host: str, url: str) -> TransportResponse:
