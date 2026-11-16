@@ -1,10 +1,10 @@
 import sys, json
-sys.path.insert(0, r"C:\dev\GitHub\Weyland-Filament-Tool")
 from pathlib import Path
+ROOT = Path(__file__).resolve().parents[3]
+sys.path.insert(0, str(ROOT))
 from src.generator.profile_builder import ProfileBuilder
 b = ProfileBuilder()
 ov = {
- "name": "TimePlast TimeMass Plant Vitamin", "from": "User", "instantiation": "true", "filament_id": "PTMPV01",
  "nozzle_temperature": [230],
  "nozzle_temperature_initial_layer": [230],
  "filament_flow_ratio": [0.92],
@@ -27,8 +27,7 @@ ov = {
  "filament_cost": ["72.86"],
  "filament_notes": ["TimeMass Plant Vitamin (Gen 2). Requires 0.8 mm nozzle, 0.3 mm layers. Dry before printing. Source: timeplast.com product page. Bed temps are assumptions (template defaults); use cool plate (CryoGrip) per vendor."],
 }
-p = b.build_profile("TimePlast TimeMass Plant Vitamin", "pla", "TimePlast", manual_overrides=ov)
+p = b.build_profile("TimePlast TimeMass Plant Vitamin", "pla", "TimePlast", manual_overrides=ov, filament_id="PTMPV01")
 out = b.save_profile(p, Path(r"C:\dev\GitHub\Weyland-Filament-Tool\docs\research\timemass-plant-vitamin\TimePlast TimeMass Plant Vitamin.json"))
 d = json.load(open(out, encoding="utf-8"))
-print(json.dumps(d, indent=1))
 print(p.validate())

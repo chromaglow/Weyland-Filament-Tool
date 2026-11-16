@@ -30,8 +30,10 @@ Method: depth-first on one vendor page (single source). Output: findings-with-co
 ## Sources
 1. https://www.timeplast.com/shop/p/timemass-plant-vitamin-filament - vendor page, fetched 2026-11-16. Currency pass, relevance pass, authority pass (manufacturer), accuracy unverified (marketing, uncorroborated; no independent source found/sought). Used with Likely labels.
 
-## Builder issues for Developer follow-up (src/ not edited)
-1. Template metadata leaks: templates' `name`, `from: System`, `instantiation: false`, `filament_id: GFL99` override the profile's own values in `to_bambu_json()` (additional_settings merge last). Output would import as a system "Generic PLA". Worked around via manual_overrides.
-2. `FilamentProfile.validate()` demands `bed_temperature`, which has no Bambu key; always fails for builder output.
-3. `MaterialSettings.to_dict()` emits scalars (not arrays) for non-list values, e.g. scraped flow ratio, invalid in Bambu format.
-4. No material template for water-soluble/PVA-like materials (`pva` prefix exists in IDGenerator only).
+## Builder issues (resolved in wft-47025a.1)
+1. Template identity keys leaking over the profile: fixed in `FilamentProfile.to_bambu_json()`.
+2. `validate()` demanding `bed_temperature`: now checks nozzle temp and at least one plate temp.
+3. `MaterialSettings.to_dict()` scalars: now always string arrays.
+4. No water-soluble/PVA-like template: deliberately not added (no grounded settings for such a material; Generic PLA base remains an assumption).
+`generate_profile.py` now passes no overrides for name/from/instantiation; only `filament_id="PTMPV01"` is given explicitly.
+Install: `_for-ezra/01-import-timemass-profile.cmd`. Not yet tested in the Bambu Studio GUI.
