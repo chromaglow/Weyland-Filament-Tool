@@ -1,0 +1,10 @@
+{
+    "type": "filament",
+    "name": "Orca PETG Test",
+    "inherits": "Generic PETG",
+    "filament_type": "PETG",
+    "nozzle_temperature": "240",
+    "hot_plate_temp": ["80"],
+    "filament_density": 1.27,
+    "filament_cost": "nil"
+}

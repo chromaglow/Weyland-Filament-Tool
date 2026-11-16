@@ -1,0 +1,5 @@
+{
+    "type": "machine",
+    "name": "Printer Test",
+    "nozzle_diameter": ["0.4"]
+}
