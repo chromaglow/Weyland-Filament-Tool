@@ -25,10 +25,10 @@
     "65"
   ],
   "textured_plate_temp": [
-    "45"
+    "90"
   ],
   "filament_flow_ratio": [
-    "0.92"
+    "0.95"
   ],
   "filament_max_volumetric_speed": [
     "12"
@@ -52,10 +52,19 @@
     "15"
   ],
   "fan_cooling_layer_time": [
-    "10"
+    "100"
   ],
   "hot_plate_temp_initial_layer": [
     "65"
+  ],
+  "nozzle_temperature_range_low": [
+    "220"
+  ],
+  "nozzle_temperature_range_high": [
+    "235"
+  ],
+  "textured_plate_temp_initial_layer": [
+    "90"
   ],
   "close_fan_the_first_x_layers": [
     "3"
@@ -66,17 +75,17 @@
   "fan_max_speed": [
     "15"
   ],
+  "slow_down_layer_time": [
+    "8"
+  ],
   "overhang_fan_speed": [
     "15"
-  ],
-  "reduce_fan_stop_start_freq": [
-    "0"
   ],
   "slow_down_for_layer_cooling": [
     "1"
   ],
-  "overhang_fan_threshold": [
-    "95%"
+  "additional_cooling_fan_speed": [
+    "0"
   ],
   "filament_diameter": [
     "1.75"
@@ -84,13 +93,7 @@
   "filament_vendor": [
     "TimePlast"
   ],
-  "filament_type": [
-    "PLA"
-  ],
-  "filament_cost": [
-    "72.86"
-  ],
   "filament_notes": [
-    "TimeMass Plant Vitamin (Gen 2). Requires 0.8 mm nozzle, 0.3 mm layers. Dry before printing. Source: timeplast.com product page. Bed temps are assumptions (template defaults); use cool plate (CryoGrip) per vendor."
+    "TimeMass Plant Vitamin Gen 2. Dry 68C/155F at least 2 h before every print. Use the external spool, not AMS. Print with the printer door open. Official nozzle is 0.8 mm. Vendor CryoGrip plate bed temperature is 75C (not mapped to a Bambu plate key). Assumption: cool, engineering and smooth high-temp plate temperatures are not published by the vendor and keep the Generic PLA template defaults."
   ]
 }

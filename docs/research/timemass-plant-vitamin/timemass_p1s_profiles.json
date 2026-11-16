@@ -1,0 +1,1738 @@
+{
+  "schema_version": "1.0",
+  "generated": "2026-11-16",
+  "source": "TimeMass 4D Print Assistant (custom GPT) interview + Timeplast pages it cited",
+  "printer": {
+    "model": "Bambu Lab P1S",
+    "slicer": "Bambu Studio",
+    "current_nozzle_mm": 0.4,
+    "current_nozzle_material": "hardened steel",
+    "current_plate": "textured PEI",
+    "enclosed": true
+  },
+  "status_values": {
+    "official_product_page": "From the SKU product page profile",
+    "official_general_guide": "From Timeplast general printing guide",
+    "not_published": "Timeplast does not publish it",
+    "estimate": "GPT/derived estimate"
+  },
+  "global_warnings": [
+    "Official nozzle is 0.8 mm for all three; user's P1S currently has 0.4 mm",
+    "Use external spool, not AMS",
+    "Door open while printing",
+    "Dry 68C/155F >= 2h before every print"
+  ],
+  "small_nozzle_estimates": {
+    "status": "estimate",
+    "note": "Not Timeplast-approved; 0.8 mm is the only current official nozzle",
+    "0.4mm": {
+      "line_width_mm": [
+        0.42,
+        0.48
+      ],
+      "layer_height_mm": [
+        0.2,
+        0.24
+      ],
+      "initial_layer_height_mm": [
+        0.2,
+        0.24
+      ],
+      "max_volumetric_speed_mm3s": [
+        4,
+        6
+      ],
+      "nozzle_temp_c": 230,
+      "test_range_c": [
+        225,
+        230
+      ]
+    },
+    "0.6mm": {
+      "line_width_mm": [
+        0.62,
+        0.68
+      ],
+      "layer_height_mm": [
+        0.25,
+        0.3
+      ],
+      "initial_layer_height_mm": [
+        0.28,
+        0.3
+      ],
+      "max_volumetric_speed_mm3s": [
+        6,
+        8
+      ],
+      "nozzle_temp_c": 230,
+      "test_range_c": [
+        225,
+        230
+      ]
+    }
+  },
+  "materials": [
+    {
+      "id": "timemass-fire-gen2",
+      "name": "TimeMass Fire Gen 2",
+      "user_alias": [
+        "Fire"
+      ],
+      "purpose": "Burnable filament designed to ignite intentionally (candles, lanterns, burnable sculptures)",
+      "source_url": "https://www.timeplast.com/shop/p/timemass-fire",
+      "settings": {
+        "filament": {
+          "diameter_mm": {
+            "value": 1.75,
+            "status": "official_product_page",
+            "note": "\u00b10.15"
+          },
+          "spool_mass_g": {
+            "value": 350,
+            "status": "official_product_page"
+          },
+          "density_g_cm3": {
+            "status": "not_published"
+          },
+          "softening_temp_c": {
+            "status": "not_published"
+          },
+          "shrinkage_pct": {
+            "status": "not_published"
+          },
+          "melting_approx_c": {
+            "value": 165,
+            "status": "official_product_page",
+            "note": "approx; not a Vicat/HDT value"
+          },
+          "decomposition_above_c": {
+            "value": 240,
+            "status": "official_product_page"
+          },
+          "older_manual_max_volumetric_mm3s": {
+            "value": 8,
+            "status": "official_product_page",
+            "note": "older manual Fire profile, nozzle unspecified"
+          }
+        },
+        "temperature": {
+          "nozzle_c": {
+            "value": 230,
+            "status": "official_product_page"
+          },
+          "nozzle_range_product_c": {
+            "value": [
+              220,
+              240
+            ],
+            "status": "official_product_page"
+          },
+          "nozzle_range_guide_c": {
+            "value": [
+              225,
+              235
+            ],
+            "status": "official_general_guide",
+            "note": "guide max 235"
+          },
+          "nozzle_initial_layer_c": {
+            "value": 230,
+            "status": "official_product_page",
+            "note": "single value published"
+          },
+          "nozzle_other_layers_c": {
+            "value": 230,
+            "status": "official_product_page"
+          },
+          "failure_adjust": {
+            "value": "reduce nozzle temp 10C and retry",
+            "status": "official_product_page"
+          },
+          "bed_cryogrip_blue_c": {
+            "value": 75,
+            "status": "official_product_page"
+          },
+          "bed_textured_pei_c_guide": {
+            "value": 90,
+            "status": "official_general_guide",
+            "note": "guide: 90 or printer max; store-wide says 95 for regular textured"
+          },
+          "bed_cool_plate_c": {
+            "status": "not_published"
+          },
+          "bed_engineering_plate_c": {
+            "status": "not_published"
+          },
+          "bed_high_temp_plate_c": {
+            "status": "not_published"
+          },
+          "recommended_plate": {
+            "value": "CryoGrip blue",
+            "status": "official_product_page"
+          },
+          "bed_textured_pei_c_product": {
+            "value": 75,
+            "status": "official_product_page",
+            "note": "Fire profile lists 75C"
+          }
+        },
+        "enclosure": {
+          "door": {
+            "value": "open",
+            "status": "official_product_page",
+            "note": "let vapor escape"
+          },
+          "lid": {
+            "status": "not_published"
+          },
+          "avoid_hotend_dwell": {
+            "value": true,
+            "status": "official_product_page"
+          }
+        },
+        "cooling": {
+          "no_cooling_first_layers": {
+            "value": 3,
+            "status": "official_product_page"
+          },
+          "fan_min_pct": {
+            "value": 0,
+            "status": "official_product_page"
+          },
+          "fan_min_layer_time_s": {
+            "value": 100,
+            "status": "official_product_page"
+          },
+          "fan_max_pct": {
+            "value": 15,
+            "status": "official_product_page"
+          },
+          "fan_max_layer_time_s": {
+            "value": 8,
+            "status": "official_product_page"
+          },
+          "keep_fan_always_on": {
+            "value": false,
+            "status": "official_product_page"
+          },
+          "slow_down_for_cooling": {
+            "value": true,
+            "status": "official_product_page"
+          },
+          "force_cooling_overhangs": {
+            "value": false,
+            "status": "official_product_page"
+          },
+          "overhang_fan_pct": {
+            "value": 15,
+            "status": "official_product_page"
+          },
+          "pre_start_fan_time_s": {
+            "value": 2,
+            "status": "official_product_page"
+          },
+          "aux_fan_pct": {
+            "status": "not_published"
+          },
+          "guide_after_first_layers_pct": {
+            "value": [
+              10,
+              20
+            ],
+            "status": "official_general_guide"
+          }
+        },
+        "flow": {
+          "flow_ratio": {
+            "value": 0.92,
+            "status": "official_product_page"
+          },
+          "flow_ratio_guide": {
+            "value": [
+              0.95,
+              1.05
+            ],
+            "status": "official_general_guide"
+          },
+          "max_volumetric_speed_mm3s": {
+            "value": 12,
+            "status": "official_product_page"
+          },
+          "ramming_speed_mm3s": {
+            "value": 3,
+            "status": "official_product_page"
+          },
+          "pressure_advance": {
+            "value": 0.05,
+            "status": "official_product_page",
+            "note": "apply via P1S-supported method; don't paste M900 blindly"
+          }
+        },
+        "retraction": {
+          "length_mm": {
+            "value": 0.4,
+            "status": "official_product_page"
+          },
+          "speed_mm_s": {
+            "value": 15,
+            "status": "official_product_page"
+          },
+          "guide_length_mm": {
+            "value": [
+              0,
+              1.0
+            ],
+            "status": "official_general_guide"
+          },
+          "guide_speed_max_mm_s": {
+            "value": 20,
+            "status": "official_general_guide"
+          },
+          "z_hop_mm": {
+            "status": "not_published"
+          }
+        },
+        "geometry": {
+          "nozzle_mm": {
+            "value": 0.8,
+            "status": "official_product_page"
+          },
+          "hardened_nozzle_required": {
+            "status": "not_published"
+          },
+          "layer_height_mm": {
+            "value": 0.3,
+            "status": "official_product_page"
+          },
+          "initial_layer_height_mm": {
+            "value": 0.35,
+            "status": "official_product_page"
+          },
+          "line_width_mm": {
+            "value": 0.8,
+            "status": "official_product_page",
+            "note": "all lines"
+          }
+        },
+        "quality": {
+          "gap_closing_radius_mm": {
+            "value": 0.1,
+            "status": "official_product_page"
+          },
+          "arc_fitting": {
+            "value": true,
+            "status": "official_product_page"
+          },
+          "elephant_foot_mm": {
+            "value": 0.1,
+            "status": "official_product_page"
+          },
+          "wall_loops": {
+            "value": 2,
+            "status": "official_product_page"
+          },
+          "detect_thin_walls": {
+            "value": true,
+            "status": "official_product_page"
+          },
+          "top_bottom_shell_layers": {
+            "value": 3,
+            "status": "official_product_page"
+          },
+          "top_bottom_thickness_mm": {
+            "value": 1.2,
+            "status": "official_product_page"
+          },
+          "top_bottom_pattern": {
+            "value": "monotonic",
+            "status": "official_product_page"
+          },
+          "wall_order": {
+            "value": "inner_before_outer",
+            "status": "official_product_page"
+          },
+          "infill_first": {
+            "value": false,
+            "status": "official_product_page"
+          },
+          "smooth_speed_transition": {
+            "value": true,
+            "status": "official_product_page"
+          },
+          "smooth_coefficient": {
+            "value": 80,
+            "status": "official_product_page"
+          },
+          "avoid_crossing_walls": {
+            "value": true,
+            "status": "official_product_page"
+          },
+          "max_detour": {
+            "value": "10mm or 5%",
+            "status": "official_product_page"
+          },
+          "seam_position": {
+            "value": "aligned_or_back",
+            "status": "official_product_page"
+          },
+          "smart_scarf_seam": {
+            "value": true,
+            "status": "official_product_page"
+          },
+          "scarf_seam_angle_deg": {
+            "value": 155,
+            "status": "official_product_page"
+          },
+          "scarf_seam_steps": {
+            "value": 10,
+            "status": "official_product_page"
+          }
+        },
+        "infill": {
+          "density_pct": {
+            "value": [
+              20,
+              25
+            ],
+            "status": "official_product_page"
+          },
+          "pattern": {
+            "value": "grid",
+            "status": "official_product_page"
+          },
+          "wall_infill_overlap_pct": {
+            "value": 10,
+            "status": "official_product_page"
+          },
+          "infill_combination": {
+            "value": true,
+            "status": "official_product_page"
+          },
+          "detect_floating_shells": {
+            "value": true,
+            "status": "official_product_page"
+          }
+        },
+        "speed_mm_s": {
+          "travel": {
+            "value": 160,
+            "status": "official_product_page"
+          },
+          "initial_layer": {
+            "value": 15,
+            "status": "official_product_page"
+          },
+          "outer_wall": {
+            "value": 60,
+            "status": "official_product_page"
+          },
+          "inner_wall": {
+            "value": 90,
+            "status": "official_product_page"
+          },
+          "small_perimeter": {
+            "value": 35,
+            "status": "official_product_page"
+          },
+          "top_surface": {
+            "value": 40,
+            "status": "official_product_page"
+          },
+          "infill": {
+            "value": [
+              100,
+              120
+            ],
+            "status": "official_product_page"
+          }
+        },
+        "accel_mm_s2": {
+          "normal": {
+            "value": 2000,
+            "status": "official_product_page"
+          },
+          "travel": {
+            "value": 4000,
+            "status": "official_product_page"
+          },
+          "initial_layer": {
+            "value": 300,
+            "status": "official_product_page"
+          },
+          "outer_wall": {
+            "value": 1500,
+            "status": "official_product_page"
+          },
+          "inner_wall": {
+            "value": 2000,
+            "status": "official_product_page"
+          },
+          "top_surface": {
+            "value": 1500,
+            "status": "official_product_page"
+          }
+        },
+        "adhesion": {
+          "skirt_loops": {
+            "value": 2,
+            "status": "official_product_page"
+          },
+          "brim_width_mm": {
+            "value": 6,
+            "status": "official_product_page"
+          },
+          "brim_gap_mm": {
+            "value": 0.15,
+            "status": "official_product_page"
+          }
+        },
+        "feeding": {
+          "ams": {
+            "value": "not_compatible",
+            "status": "official_product_page",
+            "note": "timemass1 general page says push AMS doesn't work with TimeMass; GPT later said not SKU-explicit"
+          },
+          "external_spool": {
+            "value": true,
+            "status": "estimate"
+          }
+        },
+        "drying": {
+          "guide": {
+            "value": {
+              "temp_c": 68,
+              "temp_f": 155,
+              "min_hours": 2,
+              "when": "before every print"
+            },
+            "status": "official_general_guide"
+          },
+          "store_wide_alt": {
+            "value": {
+              "temp_c": 55,
+              "hours": [
+                24,
+                48
+              ]
+            },
+            "status": "official_product_page",
+            "note": "conflicting store-wide instruction"
+          },
+          "storage": {
+            "value": "cool, dry, with desiccant",
+            "status": "official_product_page"
+          },
+          "packaging": {
+            "value": "not vacuum sealed; always dry first",
+            "status": "official_product_page"
+          },
+          "product_page": {
+            "value": {
+              "temp_c": 55,
+              "hours": [
+                24,
+                48
+              ]
+            },
+            "status": "official_product_page",
+            "note": "Fire page; conflicts with guide 68C/2h"
+          }
+        }
+      },
+      "p1s_recommended": {
+        "base_preset_template": "Generic PLA (template only; material is not PLA)",
+        "nozzle_mm": 0.8,
+        "nozzle_temp_c": 230,
+        "nozzle_temp_max_c": 235,
+        "bed_textured_pei_c": 90,
+        "flow_ratio": 0.95,
+        "layer_height_mm": 0.3,
+        "initial_layer_height_mm": 0.35,
+        "line_width_mm": 0.8,
+        "max_volumetric_speed_mm3s": 12,
+        "speeds_mm_s": {
+          "outer_wall": 60,
+          "inner_wall": 90,
+          "infill": 100,
+          "initial_layer": 15,
+          "travel": 160,
+          "top_surface": 40,
+          "small_perimeter": 35
+        },
+        "retraction": {
+          "length_mm": 0.4,
+          "speed_mm_s": 15
+        },
+        "z_hop": "Bambu default",
+        "pressure_advance": 0.05,
+        "cooling": {
+          "off_first_layers": 3,
+          "max_pct": 15
+        },
+        "aux_fan_pct": 0,
+        "wall_loops": 2,
+        "infill": {
+          "density_pct": 20,
+          "pattern": "grid"
+        },
+        "brim_mm": 6,
+        "door": "open",
+        "feed": "external spool",
+        "drying": "68C/155F >= 2h before every print",
+        "reconciliation_rule": "Where product page and general guide conflict, guide values win (flow 95%, bed 90C textured, max 235C).",
+        "prime_tower": "not specified"
+      },
+      "use": {
+        "notes": [
+          "Thicker sections may restrict burning; very thin sections burn away quickly",
+          "Start with a small simple supervised test print"
+        ],
+        "safety": [
+          "Print with ventilation, door open",
+          "Never leave a burning print unattended",
+          "Combustion byproducts not fully tested by Timeplast",
+          "Keep away from children and pets",
+          "Not for safety-critical/commercial use without independent verification"
+        ]
+      }
+    },
+    {
+      "id": "timemass-plant-vitamin-gen2",
+      "name": "TimeMass Plant Vitamin Gen 2",
+      "user_alias": [
+        "Fertilizer V2"
+      ],
+      "purpose": "Water-retaining nutrient-loaded filament; moisture-triggered slow-release fertilization",
+      "source_url": "https://www.timeplast.com/shop/p/timemass-plant-vitamin-filament",
+      "settings": {
+        "filament": {
+          "diameter_mm": {
+            "value": 1.75,
+            "status": "official_product_page",
+            "note": "\u00b10.15"
+          },
+          "spool_mass_g": {
+            "value": 350,
+            "status": "official_product_page"
+          },
+          "density_g_cm3": {
+            "status": "not_published"
+          },
+          "softening_temp_c": {
+            "status": "not_published"
+          },
+          "shrinkage_pct": {
+            "status": "not_published"
+          },
+          "melting_approx_c": {
+            "value": 165,
+            "status": "official_product_page",
+            "note": "approx; not a Vicat/HDT value"
+          },
+          "decomposition_above_c": {
+            "value": 240,
+            "status": "official_product_page"
+          }
+        },
+        "temperature": {
+          "nozzle_c": {
+            "value": 230,
+            "status": "official_product_page"
+          },
+          "nozzle_range_product_c": {
+            "value": [
+              220,
+              240
+            ],
+            "status": "official_product_page"
+          },
+          "nozzle_range_guide_c": {
+            "value": [
+              225,
+              235
+            ],
+            "status": "official_general_guide",
+            "note": "guide max 235"
+          },
+          "nozzle_initial_layer_c": {
+            "value": 230,
+            "status": "official_product_page",
+            "note": "single value published"
+          },
+          "nozzle_other_layers_c": {
+            "value": 230,
+            "status": "official_product_page"
+          },
+          "failure_adjust": {
+            "value": "reduce nozzle temp 10C and retry",
+            "status": "official_product_page"
+          },
+          "bed_cryogrip_blue_c": {
+            "value": 75,
+            "status": "official_product_page",
+            "note": "from broader TimeMass page; not on individual page"
+          },
+          "bed_textured_pei_c_guide": {
+            "value": 90,
+            "status": "official_general_guide",
+            "note": "guide: 90 or printer max; store-wide says 95 for regular textured"
+          },
+          "bed_cool_plate_c": {
+            "status": "not_published"
+          },
+          "bed_engineering_plate_c": {
+            "status": "not_published"
+          },
+          "bed_high_temp_plate_c": {
+            "status": "not_published"
+          },
+          "recommended_plate": {
+            "value": "CryoGrip blue",
+            "status": "official_product_page"
+          },
+          "nozzle_range_broader_page_c": {
+            "value": [
+              230,
+              245
+            ],
+            "status": "official_product_page",
+            "note": "broader page copy; conflicts"
+          }
+        },
+        "enclosure": {
+          "door": {
+            "value": "open",
+            "status": "official_product_page",
+            "note": "let vapor escape"
+          },
+          "lid": {
+            "status": "not_published"
+          },
+          "avoid_hotend_dwell": {
+            "value": true,
+            "status": "official_product_page"
+          }
+        },
+        "cooling": {
+          "no_cooling_first_layers": {
+            "value": 3,
+            "status": "official_product_page"
+          },
+          "fan_min_pct": {
+            "value": 0,
+            "status": "official_product_page"
+          },
+          "fan_min_layer_time_s": {
+            "value": 100,
+            "status": "official_product_page"
+          },
+          "fan_max_pct": {
+            "value": 15,
+            "status": "official_product_page"
+          },
+          "fan_max_layer_time_s": {
+            "value": 8,
+            "status": "official_product_page"
+          },
+          "keep_fan_always_on": {
+            "value": false,
+            "status": "official_product_page"
+          },
+          "slow_down_for_cooling": {
+            "value": true,
+            "status": "official_product_page"
+          },
+          "force_cooling_overhangs": {
+            "value": false,
+            "status": "official_product_page"
+          },
+          "overhang_fan_pct": {
+            "value": 15,
+            "status": "official_product_page"
+          },
+          "pre_start_fan_time_s": {
+            "value": 2,
+            "status": "official_product_page"
+          },
+          "aux_fan_pct": {
+            "status": "not_published"
+          },
+          "guide_after_first_layers_pct": {
+            "value": [
+              10,
+              20
+            ],
+            "status": "official_general_guide"
+          }
+        },
+        "flow": {
+          "flow_ratio": {
+            "value": 0.92,
+            "status": "official_product_page"
+          },
+          "flow_ratio_guide": {
+            "value": [
+              0.95,
+              1.05
+            ],
+            "status": "official_general_guide"
+          },
+          "max_volumetric_speed_mm3s": {
+            "value": 12,
+            "status": "official_product_page"
+          },
+          "ramming_speed_mm3s": {
+            "value": 3,
+            "status": "official_product_page"
+          },
+          "pressure_advance": {
+            "value": 0.05,
+            "status": "official_product_page",
+            "note": "apply via P1S-supported method; don't paste M900 blindly"
+          }
+        },
+        "retraction": {
+          "length_mm": {
+            "value": 0.4,
+            "status": "official_product_page"
+          },
+          "speed_mm_s": {
+            "value": 15,
+            "status": "official_product_page"
+          },
+          "guide_length_mm": {
+            "value": [
+              0,
+              1.0
+            ],
+            "status": "official_general_guide"
+          },
+          "guide_speed_max_mm_s": {
+            "value": 20,
+            "status": "official_general_guide"
+          },
+          "z_hop_mm": {
+            "status": "not_published"
+          }
+        },
+        "geometry": {
+          "nozzle_mm": {
+            "value": 0.8,
+            "status": "official_product_page"
+          },
+          "hardened_nozzle_required": {
+            "status": "not_published"
+          },
+          "layer_height_mm": {
+            "value": 0.3,
+            "status": "official_product_page"
+          },
+          "initial_layer_height_mm": {
+            "value": 0.35,
+            "status": "official_product_page"
+          },
+          "line_width_mm": {
+            "value": 0.8,
+            "status": "official_product_page",
+            "note": "all lines"
+          }
+        },
+        "quality": {
+          "gap_closing_radius_mm": {
+            "value": 0.1,
+            "status": "official_product_page"
+          },
+          "arc_fitting": {
+            "value": true,
+            "status": "official_product_page"
+          },
+          "elephant_foot_mm": {
+            "value": 0.1,
+            "status": "official_product_page"
+          },
+          "wall_loops": {
+            "value": 2,
+            "status": "official_product_page"
+          },
+          "detect_thin_walls": {
+            "value": true,
+            "status": "official_product_page"
+          },
+          "top_bottom_shell_layers": {
+            "value": 3,
+            "status": "official_product_page"
+          },
+          "top_bottom_thickness_mm": {
+            "value": 1.2,
+            "status": "official_product_page"
+          },
+          "top_bottom_pattern": {
+            "value": "monotonic",
+            "status": "official_product_page"
+          },
+          "wall_order": {
+            "value": "inner_before_outer",
+            "status": "official_product_page"
+          },
+          "infill_first": {
+            "value": false,
+            "status": "official_product_page"
+          },
+          "smooth_speed_transition": {
+            "value": true,
+            "status": "official_product_page"
+          },
+          "smooth_coefficient": {
+            "value": 80,
+            "status": "official_product_page"
+          },
+          "avoid_crossing_walls": {
+            "value": true,
+            "status": "official_product_page"
+          },
+          "max_detour": {
+            "value": "10mm or 5%",
+            "status": "official_product_page"
+          },
+          "seam_position": {
+            "value": "aligned_or_back",
+            "status": "official_product_page"
+          },
+          "smart_scarf_seam": {
+            "value": true,
+            "status": "official_product_page"
+          },
+          "scarf_seam_angle_deg": {
+            "value": 155,
+            "status": "official_product_page"
+          },
+          "scarf_seam_steps": {
+            "value": 10,
+            "status": "official_product_page"
+          }
+        },
+        "infill": {
+          "density_pct": {
+            "value": [
+              20,
+              25
+            ],
+            "status": "official_product_page"
+          },
+          "pattern": {
+            "value": "grid",
+            "status": "official_product_page"
+          },
+          "wall_infill_overlap_pct": {
+            "value": 10,
+            "status": "official_product_page"
+          },
+          "infill_combination": {
+            "value": true,
+            "status": "official_product_page"
+          },
+          "detect_floating_shells": {
+            "value": true,
+            "status": "official_product_page"
+          }
+        },
+        "speed_mm_s": {
+          "travel": {
+            "value": 160,
+            "status": "official_product_page"
+          },
+          "initial_layer": {
+            "value": 15,
+            "status": "official_product_page"
+          },
+          "outer_wall": {
+            "value": 60,
+            "status": "official_product_page"
+          },
+          "inner_wall": {
+            "value": 90,
+            "status": "official_product_page"
+          },
+          "small_perimeter": {
+            "value": 35,
+            "status": "official_product_page"
+          },
+          "top_surface": {
+            "value": 40,
+            "status": "official_product_page"
+          },
+          "infill": {
+            "value": [
+              100,
+              120
+            ],
+            "status": "official_product_page"
+          }
+        },
+        "accel_mm_s2": {
+          "normal": {
+            "value": 2000,
+            "status": "official_product_page"
+          },
+          "travel": {
+            "value": 4000,
+            "status": "official_product_page"
+          },
+          "initial_layer": {
+            "value": 300,
+            "status": "official_product_page"
+          },
+          "outer_wall": {
+            "value": 1500,
+            "status": "official_product_page"
+          },
+          "inner_wall": {
+            "value": 2000,
+            "status": "official_product_page"
+          },
+          "top_surface": {
+            "value": 1500,
+            "status": "official_product_page"
+          }
+        },
+        "adhesion": {
+          "skirt_loops": {
+            "value": 2,
+            "status": "official_product_page"
+          },
+          "brim_width_mm": {
+            "value": 6,
+            "status": "official_product_page"
+          },
+          "brim_gap_mm": {
+            "value": 0.15,
+            "status": "official_product_page"
+          }
+        },
+        "feeding": {
+          "ams": {
+            "value": "unconfirmed",
+            "status": "not_published",
+            "note": "use external spool"
+          },
+          "external_spool": {
+            "value": true,
+            "status": "estimate"
+          }
+        },
+        "drying": {
+          "guide": {
+            "value": {
+              "temp_c": 68,
+              "temp_f": 155,
+              "min_hours": 2,
+              "when": "before every print"
+            },
+            "status": "official_general_guide"
+          },
+          "store_wide_alt": {
+            "value": {
+              "temp_c": 55,
+              "hours": [
+                24,
+                48
+              ]
+            },
+            "status": "official_product_page",
+            "note": "conflicting store-wide instruction"
+          },
+          "storage": {
+            "value": "cool, dry, with desiccant",
+            "status": "official_product_page"
+          },
+          "packaging": {
+            "value": "not vacuum sealed; always dry first",
+            "status": "official_product_page"
+          },
+          "product_page": {
+            "value": {
+              "temp_f": 155,
+              "hours": 2
+            },
+            "status": "official_product_page"
+          }
+        },
+        "prime_tower": {
+          "enabled": {
+            "value": true,
+            "status": "official_product_page"
+          },
+          "width_mm": {
+            "value": 40,
+            "status": "official_product_page"
+          },
+          "brim_mm": {
+            "value": 4,
+            "status": "official_product_page"
+          },
+          "flush_into_support": {
+            "value": true,
+            "status": "official_product_page"
+          }
+        },
+        "start_gcode_example": {
+          "value": "M900 K0.05\nM106 S0\nG92 E0\nG1 E15 F300\nG92 E0",
+          "status": "official_product_page",
+          "note": "don't paste wholesale on P1S"
+        }
+      },
+      "p1s_recommended": {
+        "base_preset_template": "Generic PLA (template only; material is not PLA)",
+        "nozzle_mm": 0.8,
+        "nozzle_temp_c": 230,
+        "nozzle_temp_max_c": 235,
+        "bed_textured_pei_c": 90,
+        "flow_ratio": 0.95,
+        "layer_height_mm": 0.3,
+        "initial_layer_height_mm": 0.35,
+        "line_width_mm": 0.8,
+        "max_volumetric_speed_mm3s": 12,
+        "speeds_mm_s": {
+          "outer_wall": 60,
+          "inner_wall": 90,
+          "infill": 100,
+          "initial_layer": 15,
+          "travel": 160,
+          "top_surface": 40,
+          "small_perimeter": 35
+        },
+        "retraction": {
+          "length_mm": 0.4,
+          "speed_mm_s": 15
+        },
+        "z_hop": "Bambu default",
+        "pressure_advance": 0.05,
+        "cooling": {
+          "off_first_layers": 3,
+          "max_pct": 15
+        },
+        "aux_fan_pct": 0,
+        "wall_loops": 2,
+        "infill": {
+          "density_pct": 20,
+          "pattern": "grid"
+        },
+        "brim_mm": 6,
+        "door": "open",
+        "feed": "external spool",
+        "drying": "68C/155F >= 2h before every print",
+        "reconciliation_rule": "Where product page and general guide conflict, guide values win (flow 95%, bed 90C textured, max 235C).",
+        "prime_tower": "on, 40mm"
+      },
+      "composition": {
+        "per_350g_spool_g": {
+          "N": 10.8,
+          "P2O5": 8.4,
+          "K2O": 6.8,
+          "Ca": 2.4,
+          "Mg": 0.8
+        },
+        "structured_water_pct": 70,
+        "calcium_carbonate_pct": 20
+      },
+      "use": {
+        "applications": [
+          "nutrient spikes in root zone",
+          "seed pods",
+          "buried nutrient discs",
+          "planter inserts",
+          "garden markers",
+          "hydroponic carriers"
+        ],
+        "release_time": {
+          "status": "not_published",
+          "note": "gradual, water-triggered; no release curve or dosing published"
+        },
+        "post_processing": "Stretch and form-fit after printing for flexibility/shape memory",
+        "suggested_test": "Small disc/spike on non-critical plant with untreated control; log mass, date, watering",
+        "safety": [
+          "Do not ingest",
+          "Ventilate",
+          "Not certified food/feed/drinking-water contact",
+          "Not a complete fertilizer"
+        ]
+      }
+    },
+    {
+      "id": "timemass-detergent-gen6",
+      "name": "TimeMass Detergent Filament Gen 6",
+      "user_alias": [
+        "SOAP v6",
+        "Soap Gen 6"
+      ],
+      "purpose": "Water-activated low-foam printable cleansing bar (successor to Soap Gen 5)",
+      "source_url": "https://www.timeplast.com/shop/p/soap",
+      "settings": {
+        "filament": {
+          "diameter_mm": {
+            "value": 1.75,
+            "status": "official_product_page",
+            "note": "\u00b10.15"
+          },
+          "spool_mass_g": {
+            "value": 350,
+            "status": "official_product_page"
+          },
+          "density_g_cm3": {
+            "status": "not_published"
+          },
+          "softening_temp_c": {
+            "status": "not_published"
+          },
+          "shrinkage_pct": {
+            "status": "not_published"
+          },
+          "melting_approx_c": {
+            "value": 165,
+            "status": "official_product_page",
+            "note": "approx; not a Vicat/HDT value"
+          },
+          "decomposition_above_c": {
+            "value": 240,
+            "status": "official_product_page"
+          }
+        },
+        "temperature": {
+          "nozzle_c": {
+            "value": 230,
+            "status": "official_product_page"
+          },
+          "nozzle_range_product_c": {
+            "value": [
+              220,
+              240
+            ],
+            "status": "official_product_page"
+          },
+          "nozzle_range_guide_c": {
+            "value": [
+              225,
+              235
+            ],
+            "status": "official_general_guide",
+            "note": "guide max 235"
+          },
+          "nozzle_initial_layer_c": {
+            "value": 230,
+            "status": "official_product_page",
+            "note": "single value published"
+          },
+          "nozzle_other_layers_c": {
+            "value": 230,
+            "status": "official_product_page"
+          },
+          "failure_adjust": {
+            "value": "reduce nozzle temp 10C and retry",
+            "status": "official_product_page"
+          },
+          "bed_cryogrip_blue_c": {
+            "value": 75,
+            "status": "official_product_page"
+          },
+          "bed_textured_pei_c_guide": {
+            "value": 90,
+            "status": "official_general_guide",
+            "note": "guide: 90 or printer max; store-wide says 95 for regular textured"
+          },
+          "bed_cool_plate_c": {
+            "status": "not_published"
+          },
+          "bed_engineering_plate_c": {
+            "status": "not_published"
+          },
+          "bed_high_temp_plate_c": {
+            "status": "not_published"
+          },
+          "recommended_plate": {
+            "value": "CryoGrip blue",
+            "status": "official_product_page"
+          },
+          "bed_textured_pei_c_store": {
+            "value": 95,
+            "status": "official_product_page",
+            "note": "store-wide guidance for regular textured plate"
+          }
+        },
+        "enclosure": {
+          "door": {
+            "value": "open",
+            "status": "official_product_page",
+            "note": "let vapor escape"
+          },
+          "lid": {
+            "status": "not_published"
+          },
+          "avoid_hotend_dwell": {
+            "value": true,
+            "status": "official_product_page"
+          }
+        },
+        "cooling": {
+          "no_cooling_first_layers": {
+            "value": 3,
+            "status": "official_product_page"
+          },
+          "fan_min_pct": {
+            "value": 0,
+            "status": "official_product_page"
+          },
+          "fan_min_layer_time_s": {
+            "value": 100,
+            "status": "official_product_page"
+          },
+          "fan_max_pct": {
+            "value": 15,
+            "status": "official_product_page"
+          },
+          "fan_max_layer_time_s": {
+            "value": 8,
+            "status": "official_product_page"
+          },
+          "keep_fan_always_on": {
+            "value": false,
+            "status": "official_product_page"
+          },
+          "slow_down_for_cooling": {
+            "value": true,
+            "status": "official_product_page"
+          },
+          "force_cooling_overhangs": {
+            "value": false,
+            "status": "official_product_page"
+          },
+          "overhang_fan_pct": {
+            "value": 15,
+            "status": "official_product_page"
+          },
+          "pre_start_fan_time_s": {
+            "value": 2,
+            "status": "official_product_page"
+          },
+          "aux_fan_pct": {
+            "status": "not_published"
+          },
+          "guide_after_first_layers_pct": {
+            "value": [
+              10,
+              20
+            ],
+            "status": "official_general_guide"
+          }
+        },
+        "flow": {
+          "flow_ratio": {
+            "value": 0.92,
+            "status": "official_product_page"
+          },
+          "flow_ratio_guide": {
+            "value": [
+              0.95,
+              1.05
+            ],
+            "status": "official_general_guide"
+          },
+          "max_volumetric_speed_mm3s": {
+            "value": 12,
+            "status": "official_product_page"
+          },
+          "ramming_speed_mm3s": {
+            "value": 3,
+            "status": "official_product_page"
+          },
+          "pressure_advance": {
+            "value": 0.05,
+            "status": "official_product_page",
+            "note": "apply via P1S-supported method; don't paste M900 blindly"
+          }
+        },
+        "retraction": {
+          "length_mm": {
+            "value": 0.4,
+            "status": "official_product_page"
+          },
+          "speed_mm_s": {
+            "value": 15,
+            "status": "official_product_page"
+          },
+          "guide_length_mm": {
+            "value": [
+              0,
+              1.0
+            ],
+            "status": "official_general_guide"
+          },
+          "guide_speed_max_mm_s": {
+            "value": 20,
+            "status": "official_general_guide"
+          },
+          "z_hop_mm": {
+            "status": "not_published"
+          }
+        },
+        "geometry": {
+          "nozzle_mm": {
+            "value": 0.8,
+            "status": "official_product_page"
+          },
+          "hardened_nozzle_required": {
+            "status": "not_published"
+          },
+          "layer_height_mm": {
+            "value": 0.3,
+            "status": "official_product_page"
+          },
+          "initial_layer_height_mm": {
+            "value": 0.35,
+            "status": "official_product_page"
+          },
+          "line_width_mm": {
+            "value": 0.8,
+            "status": "official_product_page",
+            "note": "all lines"
+          }
+        },
+        "quality": {
+          "gap_closing_radius_mm": {
+            "value": 0.1,
+            "status": "official_product_page"
+          },
+          "arc_fitting": {
+            "value": true,
+            "status": "official_product_page"
+          },
+          "elephant_foot_mm": {
+            "value": 0.1,
+            "status": "official_product_page"
+          },
+          "wall_loops": {
+            "value": 2,
+            "status": "official_product_page"
+          },
+          "detect_thin_walls": {
+            "value": true,
+            "status": "official_product_page"
+          },
+          "top_bottom_shell_layers": {
+            "value": 3,
+            "status": "official_product_page"
+          },
+          "top_bottom_thickness_mm": {
+            "value": 1.2,
+            "status": "official_product_page"
+          },
+          "top_bottom_pattern": {
+            "value": "monotonic",
+            "status": "official_product_page"
+          },
+          "wall_order": {
+            "value": "inner_before_outer",
+            "status": "official_product_page"
+          },
+          "infill_first": {
+            "value": false,
+            "status": "official_product_page"
+          },
+          "smooth_speed_transition": {
+            "value": true,
+            "status": "official_product_page"
+          },
+          "smooth_coefficient": {
+            "value": 80,
+            "status": "official_product_page"
+          },
+          "avoid_crossing_walls": {
+            "value": true,
+            "status": "official_product_page"
+          },
+          "max_detour": {
+            "value": "10mm or 5%",
+            "status": "official_product_page"
+          },
+          "seam_position": {
+            "value": "aligned_or_back",
+            "status": "official_product_page"
+          },
+          "smart_scarf_seam": {
+            "value": true,
+            "status": "official_product_page"
+          },
+          "scarf_seam_angle_deg": {
+            "value": 155,
+            "status": "official_product_page"
+          },
+          "scarf_seam_steps": {
+            "value": 10,
+            "status": "official_product_page"
+          },
+          "watertight_note": {
+            "value": "increase top/bottom shells for more watertight print",
+            "status": "official_product_page"
+          }
+        },
+        "infill": {
+          "density_pct": {
+            "value": [
+              20,
+              25
+            ],
+            "status": "official_product_page"
+          },
+          "pattern": {
+            "value": "grid",
+            "status": "official_product_page"
+          },
+          "wall_infill_overlap_pct": {
+            "value": 10,
+            "status": "official_product_page"
+          },
+          "infill_combination": {
+            "value": true,
+            "status": "official_product_page"
+          },
+          "detect_floating_shells": {
+            "value": true,
+            "status": "official_product_page"
+          }
+        },
+        "speed_mm_s": {
+          "travel": {
+            "value": 160,
+            "status": "official_product_page"
+          },
+          "initial_layer": {
+            "value": 15,
+            "status": "official_product_page"
+          },
+          "outer_wall": {
+            "value": 60,
+            "status": "official_product_page"
+          },
+          "inner_wall": {
+            "value": 90,
+            "status": "official_product_page"
+          },
+          "small_perimeter": {
+            "value": 35,
+            "status": "official_product_page"
+          },
+          "top_surface": {
+            "value": 40,
+            "status": "official_product_page"
+          },
+          "infill": {
+            "value": [
+              100,
+              120
+            ],
+            "status": "official_product_page"
+          }
+        },
+        "accel_mm_s2": {
+          "normal": {
+            "value": 2000,
+            "status": "official_product_page"
+          },
+          "travel": {
+            "value": 4000,
+            "status": "official_product_page"
+          },
+          "initial_layer": {
+            "value": 300,
+            "status": "official_product_page"
+          },
+          "outer_wall": {
+            "value": 1500,
+            "status": "official_product_page"
+          },
+          "inner_wall": {
+            "value": 2000,
+            "status": "official_product_page"
+          },
+          "top_surface": {
+            "value": 1500,
+            "status": "official_product_page"
+          }
+        },
+        "adhesion": {
+          "skirt_loops": {
+            "value": 2,
+            "status": "official_product_page"
+          },
+          "brim_width_mm": {
+            "value": 6,
+            "status": "official_product_page"
+          },
+          "brim_gap_mm": {
+            "value": 0.15,
+            "status": "official_product_page"
+          }
+        },
+        "feeding": {
+          "ams": {
+            "value": "not_recommended",
+            "status": "official_product_page",
+            "note": "Detergent family guidance; feed directly"
+          },
+          "external_spool": {
+            "value": true,
+            "status": "estimate"
+          }
+        },
+        "drying": {
+          "guide": {
+            "value": {
+              "temp_c": 68,
+              "temp_f": 155,
+              "min_hours": 2,
+              "when": "before every print"
+            },
+            "status": "official_general_guide"
+          },
+          "store_wide_alt": {
+            "value": {
+              "temp_c": 55,
+              "hours": [
+                24,
+                48
+              ]
+            },
+            "status": "official_product_page",
+            "note": "conflicting store-wide instruction"
+          },
+          "storage": {
+            "value": "cool, dry, with desiccant",
+            "status": "official_product_page"
+          },
+          "packaging": {
+            "value": "not vacuum sealed; always dry first",
+            "status": "official_product_page"
+          },
+          "product_page": {
+            "value": "dry before printing; no duration given",
+            "status": "official_product_page"
+          }
+        },
+        "prime_tower": {
+          "enabled": {
+            "value": true,
+            "status": "official_product_page"
+          },
+          "width_mm": {
+            "value": 40,
+            "status": "official_product_page"
+          },
+          "brim_mm": {
+            "value": 4,
+            "status": "official_product_page"
+          },
+          "flush_into_support": {
+            "value": true,
+            "status": "official_product_page"
+          }
+        },
+        "start_gcode_example": {
+          "value": "M900 K0.05\nM106 S0\nG92 E0\nG1 E15 F300\nG92 E0",
+          "status": "official_product_page",
+          "note": "don't paste wholesale on P1S"
+        }
+      },
+      "p1s_recommended": {
+        "base_preset_template": "Generic PLA (template only; material is not PLA)",
+        "nozzle_mm": 0.8,
+        "nozzle_temp_c": 230,
+        "nozzle_temp_max_c": 235,
+        "bed_textured_pei_c": 90,
+        "flow_ratio": 0.95,
+        "layer_height_mm": 0.3,
+        "initial_layer_height_mm": 0.35,
+        "line_width_mm": 0.8,
+        "max_volumetric_speed_mm3s": 12,
+        "speeds_mm_s": {
+          "outer_wall": 60,
+          "inner_wall": 90,
+          "infill": 100,
+          "initial_layer": 15,
+          "travel": 160,
+          "top_surface": 40,
+          "small_perimeter": 35
+        },
+        "retraction": {
+          "length_mm": 0.4,
+          "speed_mm_s": 15
+        },
+        "z_hop": "Bambu default",
+        "pressure_advance": 0.05,
+        "cooling": {
+          "off_first_layers": 3,
+          "max_pct": 15
+        },
+        "aux_fan_pct": 0,
+        "wall_loops": 2,
+        "infill": {
+          "density_pct": 20,
+          "pattern": "grid"
+        },
+        "brim_mm": 6,
+        "door": "open",
+        "feed": "external spool",
+        "drying": "68C/155F >= 2h before every print",
+        "reconciliation_rule": "Where product page and general guide conflict, guide values win (flow 95%, bed 90C textured, max 235C).",
+        "prime_tower": "on, 40mm"
+      },
+      "gen5_reference": {
+        "density_g_cm3": {
+          "value": 1.1,
+          "status": "gen5_sds_only",
+          "note": "do not assume for Gen 6"
+        },
+        "nozzle_range_c": [
+          230,
+          245
+        ],
+        "bed_c": 75,
+        "older_0.4mm_profile": {
+          "nozzle_c": 210,
+          "flow_ratio": 1.14,
+          "pressure_advance": 0.07,
+          "bed_c": 55,
+          "note": "Soap Gen 5 only"
+        },
+        "foam": "higher lather than Gen 6"
+      },
+      "use": {
+        "workflow": [
+          "Print",
+          "Cool",
+          "Dry completely",
+          "Wet bar and hands, use (low foam)",
+          "Rinse",
+          "Dry between uses on draining dish"
+        ],
+        "dissolution_time": {
+          "status": "not_published"
+        },
+        "additives": "Can pause print to add essential oils, moisturizers, exfoliants; avoid excessive undiluted essential oils",
+        "safety": [
+          "External use only; avoid eyes and sensitive areas",
+          "Stop if irritation",
+          "Gloves/eye protection handling fresh extrusion (Gen 5 SDS)",
+          "Ventilate",
+          "Wet spills slippery",
+          "Avoid large discharge to waterways",
+          "No Gen 6 SDS verified"
+        ]
+      }
+    }
+  ],
+  "references": [
+    "https://www.timeplast.com/timemass",
+    "https://www.timeplast.com/timemass1",
+    "https://www.timeplast.com/s/Time-mass-user-manual2.pdf"
+  ]
+}
