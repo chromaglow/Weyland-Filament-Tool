@@ -25,7 +25,7 @@ from typing import Callable, Dict, List, Optional, Sequence
 from src.data.merge import MergeConfig
 from src.data.sourced import CollectedSettings
 from src.generator.merged_export import KeyCheckError, export_merged
-from src.importers.profile_import import ImportRejected, import_profile
+from src.importers.profile_import import UNKNOWN_KEYS_WARNING, ImportRejected, ImportResult, import_profile
 from src.install_profile import install_profile
 from src.scrapers.http_client import FetchError, PoliteFetcher, default_cache_dir
 from src.scrapers.source_community_profiles import collect_profile, github_transport
@@ -65,7 +65,7 @@ def _parse_source(text: str) -> tuple:
 def _gather(sources: Sequence[tuple], collected: CollectedSettings, *, offline, cache_dir, transport,
             min_interval, now, system_dirs) -> Dict[str, object]:
     """Add every source's values to `collected`; return info for the summary."""
-    info: Dict[str, object] = {"unmapped": []}
+    info: Dict[str, object] = {"unmapped": [], "import_notes": []}
     opts = {"cache_dir": cache_dir, "offline": offline}
     if min_interval is not None:
         opts["min_interval"] = min_interval
@@ -79,9 +79,19 @@ def _gather(sources: Sequence[tuple], collected: CollectedSettings, *, offline, 
             fetcher = PoliteFetcher(transport=transport or github_transport(), **opts)
             collected.values.extend(collect_profile(fetcher, value, retrieved_at=now).settings.values)
         else:
-            collected.values.extend(import_profile(value, system_dirs=system_dirs, retrieved_at=now)
-                                    .collected.values)
+            imp = import_profile(value, system_dirs=system_dirs, retrieved_at=now)
+            collected.values.extend(imp.collected.values)
+            info["import_notes"] = list(info["import_notes"]) + _import_notes(imp)
     return info
+
+
+def _import_notes(imp: ImportResult) -> List[str]:
+    """One line per thing an imported file supplied that did not become a setting."""
+    name = Path(imp.path).name
+    notes = [f"{name}: key '{k}' not emitted (not a Bambu filament key or not a single value); raw {v!r}"
+             for k, v in sorted(imp.extras.items())]
+    notes += [f"{name}: {w}" for w in imp.warnings if not w.startswith(UNKNOWN_KEYS_WARNING)]
+    return notes
 
 
 def _summarise(say, result, info, out_dir: Path) -> None:
@@ -100,17 +110,30 @@ def _summarise(say, result, info, out_dir: Path) -> None:
     say(f"Assumptions: {len(merged.assumptions)}")
     for a in merged.assumptions:
         say(f"  {a.key} = {a.value} ({a.winner.note or 'assumed'})")
+    notes = info["import_notes"]
+    if notes:
+        say(f"{len(notes)} imported file notes (not emitted or warnings); listed in {result.report_path.name}:")
+        for line in notes[:MAX_CONTESTED_LINES]:
+            say(f"  {line}")
+        if len(notes) > MAX_CONTESTED_LINES:
+            say(f"  ... {len(notes) - MAX_CONTESTED_LINES} more in the report")
     n = len(info["unmapped"])
     if n:
         say(f"{n} page items were not mapped to a setting; listed in {result.report_path.name}.")
 
 
-def _append_unmapped(report: Path, unmapped: List[str]) -> None:
-    if not unmapped:
+def _append_unmapped(report: Path, unmapped: List[str], import_notes: Sequence[str] = ()) -> None:
+    lines: List[str] = []
+    if import_notes:
+        lines += ["", "## Imported file notes", "",
+                  "Keys and warnings from imported files that did not become settings:", ""]
+        lines += [f"- {n}" for n in import_notes]
+    if unmapped:
+        lines += ["", "## Unmapped page items", "",
+                  "Numbered items on the manufacturer page that were not turned into settings:", ""]
+        lines += [f"- {u}" for u in unmapped]
+    if not lines:
         return
-    lines = ["", "## Unmapped page items", "",
-             "Numbered items on the manufacturer page that were not turned into settings:", ""]
-    lines += [f"- {u}" for u in unmapped]
     with open(report, "a", encoding="utf-8") as f:
         f.write("\n".join(lines) + "\n")
 
@@ -188,7 +211,7 @@ def main(argv: Optional[Sequence[str]] = None, *, transport=None, say: Callable[
         say(f"Error: {e}")
         return 1
 
-    _append_unmapped(result.report_path, list(info["unmapped"]))
+    _append_unmapped(result.report_path, list(info["unmapped"]), list(info["import_notes"]))
     _summarise(say, result, info, Path(args.out))
     if args.install:
         bambu = _BambuAt(Path(args.bambu_dir), running) if args.bambu_dir else get_bambu_integration()

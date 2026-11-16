@@ -106,13 +106,19 @@ def _reduce(rng: Tuple[Any, Any], policy: str) -> Any:
     return lo  # "first"
 
 
-def _expand_bed(sv: SourcedValue) -> List[Tuple[SourcedValue, bool]]:
-    """Fan an unnamed bed value out to eng/hot/textured plate keys as derived."""
-    suffix = "_initial_layer" if sv.key == "bed_temperature_initial_layer" else ""
-    keys = [p + suffix for p in PLATES]
-    if sv.key == "bed_temperature":
-        keys += [p + "_initial_layer" for p in PLATES]
-    return [(replace(sv, key=k, status="derived", note=BED_FANOUT_NOTE), True) for k in keys]
+def _expand_bed(sv: SourcedValue) -> List[Tuple[SourcedValue, int]]:
+    """Fan an unnamed bed value out to eng/hot/textured plate keys as derived.
+
+    The int is the fan-out weakness (0 = named). A plain bed_temperature also
+    implies the initial-layer keys, but that guess (2) loses to an explicit
+    bed_temperature_initial_layer (1) from the same source.
+    """
+    if sv.key == "bed_temperature_initial_layer":
+        return [(replace(sv, key=p + "_initial_layer", status="derived", note=BED_FANOUT_NOTE), 1)
+                for p in PLATES]
+    out = [(replace(sv, key=p, status="derived", note=BED_FANOUT_NOTE), 1) for p in PLATES]
+    out += [(replace(sv, key=p + "_initial_layer", status="derived", note=BED_FANOUT_NOTE), 2) for p in PLATES]
+    return out
 
 
 def merge(collected, config: Optional[MergeConfig] = None) -> MergeResult:
@@ -120,13 +126,13 @@ def merge(collected, config: Optional[MergeConfig] = None) -> MergeResult:
     rank = {k: i for i, k in enumerate(config.precedence)}
     last = len(rank)
 
-    # (sv, is_fanout, insertion order) grouped by key
-    groups: Dict[str, List[Tuple[SourcedValue, bool, int]]] = {}
+    # (sv, fan-out weakness, insertion order) grouped by key
+    groups: Dict[str, List[Tuple[SourcedValue, int, int]]] = {}
     order = 0
     for sv in collected.values:
         if sv.value is None:
             continue
-        items = _expand_bed(sv) if sv.key in ("bed_temperature", "bed_temperature_initial_layer") else [(sv, False)]
+        items = _expand_bed(sv) if sv.key in ("bed_temperature", "bed_temperature_initial_layer") else [(sv, 0)]
         for item, fan in items:
             groups.setdefault(item.key, []).append((item, fan, order))
             order += 1
@@ -137,7 +143,7 @@ def merge(collected, config: Optional[MergeConfig] = None) -> MergeResult:
             groups[key] = [(SourcedValue(
                 key=key, value=val, source_id="tool-default", source_kind=SourceKind.TOOL_DEFAULT,
                 source_url=None, status="assumption", retrieved_at=now, raw=str(val),
-                note="no source publishes it; tool default"), False, order)]
+                note="no source publishes it; tool default"), 0, order)]
             order += 1
 
     merged: Dict[str, MergedValue] = {}

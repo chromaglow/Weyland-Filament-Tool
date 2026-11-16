@@ -33,6 +33,12 @@ META_KEYS = frozenset({
 })
 
 
+# Legacy unnamed bed keys: not in the catalogue, but the merge fans them out to
+# the per-plate keys (as derived), so they are imported as ordinary values.
+LEGACY_BED_KEYS = frozenset({"bed_temperature", "bed_temperature_initial_layer"})
+UNKNOWN_KEYS_WARNING = "unknown filament keys kept as raw extras: "
+
+
 class ImportRejected(ValueError):
     """The file is not an importable filament preset."""
 
@@ -143,7 +149,7 @@ def _import_bambu(path: Path, data: Dict[str, Any], dirs: Sequence[Path], now: s
         if _is_nil(raw):
             res.nil_keys.append(key)
             continue
-        if key not in filament_keys:
+        if key not in filament_keys and key not in LEGACY_BED_KEYS:
             if src == path:
                 res.extras[key] = raw
                 unknown.append(key)
@@ -165,7 +171,7 @@ def _import_bambu(path: Path, data: Dict[str, Any], dirs: Sequence[Path], now: s
             status="imported", retrieved_at=now, raw=json.dumps(raw),
         ))
     if unknown:
-        res.warnings.append("unknown filament keys kept as raw extras: " + ", ".join(sorted(unknown)))
+        res.warnings.append(UNKNOWN_KEYS_WARNING + ", ".join(sorted(unknown)))
     return res
 
 

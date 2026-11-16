@@ -40,7 +40,8 @@ def test_nil_skipped_and_multi_value_arrays_kept_as_extras(tmp_path):
 def test_unknown_keys_preserved_with_warning(tmp_path):
     res = import_profile(FX / "bambu_user.json", system_dirs=[tmp_path])
     assert res.extras["x_mystery_key"] == ["a", "b"]
-    assert res.extras["bed_temperature"] == ["60"]
+    assert "bed_temperature" not in res.extras  # legacy bed key is imported as a value, see below
+    assert [v.value for v in res.collected.for_key("bed_temperature")] == [60]
     assert any("x_mystery_key" in w for w in res.warnings)
 
 

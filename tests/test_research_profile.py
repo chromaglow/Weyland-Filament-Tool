@@ -213,3 +213,45 @@ def test_rate_limit_on_robots_is_reported_as_rate_limit(tmp_path):
     assert code != 0 and len(out) == 1
     assert out[0].startswith("Error: rate limit reached") and "try again later" in out[0] and "robots.txt does not allow" not in out[0]
     assert not (tmp_path / "out").exists()
+
+
+def _legacy_file(tmp_path, extra=None):
+    data = {"type": "filament", "name": "Legacy", "from": "User",
+            "bed_temperature": ["70"], "bed_temperature_initial_layer": ["75"],
+            "nozzle_temperature": ["205"], "bogus_future_key": ["x"], "inherits": "Missing Parent"}
+    data.update(extra or {})
+    p = tmp_path / "legacy_in.json"
+    p.write_text(json.dumps(data), encoding="utf-8")
+    return p
+
+
+def test_import_legacy_bed_temperature_fans_out_as_derived(tmp_path):
+    code, text = run(tmp_path, ["import", str(_legacy_file(tmp_path)), "--out", str(tmp_path / "out"),
+                                "--name", "Legacy"])
+    assert code == 0, text
+    preset = json.loads((tmp_path / "out" / "Legacy.json").read_text(encoding="utf-8"))
+    assert "bed_temperature" not in preset
+    for plate in ("eng_plate_temp", "hot_plate_temp", "textured_plate_temp"):
+        assert preset[plate][0] == "70" if isinstance(preset[plate], list) else preset[plate] == "70"
+        init = preset[plate + "_initial_layer"]
+        assert (init[0] if isinstance(init, list) else init) == "75"
+    collected = json.loads((tmp_path / "out" / "legacy.collected.json").read_text(encoding="utf-8"))
+    node = collected["materials"][0]["settings"]["collected"]["bed_temperature"]
+    assert node["value"] == 70 and node["status"] == "imported"
+    report = (tmp_path / "out" / "legacy.report.md").read_text(encoding="utf-8")
+    row = next(l for l in report.splitlines() if l.startswith("| eng_plate_temp |"))
+    assert "| 70 | derived |" in row
+
+
+def test_import_surfaces_unknown_keys_and_warnings(tmp_path):
+    code, text = run(tmp_path, ["import", str(_legacy_file(tmp_path)), "--out", str(tmp_path / "out"),
+                                "--name", "Legacy"])
+    assert code == 0, text
+    preset = json.loads((tmp_path / "out" / "Legacy.json").read_text(encoding="utf-8"))
+    assert "bogus_future_key" not in preset
+    report = (tmp_path / "out" / "legacy.report.md").read_text(encoding="utf-8")
+    assert "## Imported file notes" in report
+    assert "bogus_future_key" in report
+    assert "Missing Parent" in report
+    assert "imported file notes" in text
+    assert "bogus_future_key" in text and "Missing Parent" in text
