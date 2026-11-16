@@ -86,3 +86,54 @@ def test_all_timemass_presets_install_into_temp_folder_and_cmd_lists_them(bambu_
         assert code == 0
         installed = bambu_root / "user" / "123456" / "filament" / (n + ".json")
         assert json.loads(installed.read_text(encoding="utf-8"))["name"] == n
+
+
+def test_process_preset_installs_into_process_folder_only(tmp_path):
+    root = tmp_path / "BambuStudio"
+    (root / "user" / "123456" / "filament").mkdir(parents=True)
+    (root / "user" / "123456" / "process").mkdir(parents=True)
+    p = tmp_path / "src" / "0.30mm Test.json"
+    p.parent.mkdir()
+    p.write_text(json.dumps({"name": "0.30mm Test"}), encoding="utf-8")
+    out = []
+    code = install_profile(p, FakeBambu(root), ask=lambda q: "n", say=out.append, kind="process")
+    assert code == 0
+    assert (root / "user" / "123456" / "process" / "0.30mm Test.json").exists()
+    assert not (root / "user" / "123456" / "filament" / "0.30mm Test.json").exists()
+
+
+def test_process_install_asks_before_overwrite_and_refuses_while_running(tmp_path):
+    root = tmp_path / "BambuStudio"
+    (root / "user" / "123456" / "filament").mkdir(parents=True)
+    target_dir = root / "user" / "123456" / "process"
+    target_dir.mkdir(parents=True)
+    p = tmp_path / "0.30mm Test.json"
+    p.write_text("NEW", encoding="utf-8")
+    (target_dir / p.name).write_text("OLD", encoding="utf-8")
+    assert install_profile(p, FakeBambu(root), ask=lambda q: "n", say=lambda m: None, kind="process") != 0
+    assert (target_dir / p.name).read_text(encoding="utf-8") == "OLD"
+    assert install_profile(p, FakeBambu(root, running=True), ask=lambda q: "y",
+                           say=lambda m: None, kind="process") != 0
+    assert (target_dir / p.name).read_text(encoding="utf-8") == "OLD"
+    assert install_profile(p, FakeBambu(root), ask=lambda q: "y", say=lambda m: None, kind="process") == 0
+    assert (target_dir / p.name).read_text(encoding="utf-8") == "NEW"
+
+
+def test_process_install_reports_missing_process_folder(tmp_path):
+    root = tmp_path / "BambuStudio"
+    (root / "user" / "123456" / "filament").mkdir(parents=True)
+    p = tmp_path / "0.30mm Test.json"
+    p.write_text("X", encoding="utf-8")
+    out = []
+    assert install_profile(p, FakeBambu(root), ask=lambda q: "y", say=out.append, kind="process") != 0
+    assert any("process" in line.lower() for line in out)
+
+
+def test_cli_process_flag_and_cmd_installs_process_preset():
+    from pathlib import Path
+    from src.install_profile import parse_args
+    assert parse_args(["--process", "a.json"]) == ("process", "a.json")
+    assert parse_args(["a.json"]) == ("filament", "a.json")
+    cmd = (Path(__file__).resolve().parents[1] / "_for-ezra" / "01-import-timemass-profile.cmd"
+           ).read_text(encoding="utf-8")
+    assert "0.30mm TimeMass @BBL P1S 0.8 nozzle" in cmd and "--process" in cmd

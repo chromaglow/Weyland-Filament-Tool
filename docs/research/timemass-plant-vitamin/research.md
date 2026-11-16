@@ -79,3 +79,39 @@ Built with the same loader and mapping as Plant Vitamin from the p1s_recommended
 4. No water-soluble/PVA-like template: deliberately not added (no grounded settings for such a material; Generic PLA base remains an assumption).
 `generate_profile.py` now passes no overrides for name/from/instantiation; only `filament_id="PTMPV01"` is given explicitly.
 Install: `_for-ezra/01-import-timemass-profile.cmd`. Not yet tested in the Bambu Studio GUI.
+
+## Process preset: "0.30mm TimeMass @BBL P1S 0.8 nozzle" (wft-47025a.4)
+File: `0.30mm TimeMass @BBL P1S 0.8 nozzle.json`; code: `src/generator/process_builder.py`, generator `generate_process.py`. Installed by the same `.cmd` into `user\<id>\process\` (refuses while Bambu Studio runs, asks before overwriting).
+
+Source and caveat: every value comes from the user-collected `timemass_p1s_profiles.json` (a vendor custom-GPT interview plus the Timeplast pages it cited). It was NOT checked against the vendor pages. The geometry, quality, infill, speed, acceleration and adhesion sections are identical across Plant Vitamin, Fire and Detergent (only Detergent adds a "watertight_note"), so one preset serves all three.
+
+Base: inherits `0.40mm Standard @BBL X1C 0.8 nozzle`, which is the `default_print_profile` of the P1S 0.8 nozzle machine preset. No P1S-named 0.8 process preset exists in the system folder (only P1P, A1, X1C, H2x), and that X1C preset already lists "Bambu Lab P1S 0.8 nozzle" as compatible. Value format follows the base: 2-entry arrays (Standard / High Flow variants) for per-speed and acceleration keys, strings for scalars.
+
+| Setting | Value | Bambu key | Status |
+|---|---|---|---|
+| Layer height / first layer | 0.3 / 0.35 | layer_height, initial_layer_print_height | applied |
+| Line widths (all) | 0.8 | line_width, outer/inner_wall, sparse_infill, top_surface, initial_layer(+_infill), internal_solid_infill, support, skin/skeleton | applied |
+| Walls / top and bottom shells | 2 / 3 | wall_loops, top_shell_layers, bottom_shell_layers | applied |
+| Top and bottom pattern | monotonic | top_surface_pattern, bottom_surface_pattern | applied |
+| Wall order (inner before outer, infill last) | inner wall/outer wall/infill | wall_infill_order | applied |
+| Infill | grid 20% (file 20-25, p1s_recommended 20) | sparse_infill_pattern, sparse_infill_density | applied |
+| Wall/infill overlap, infill combination, detect floating shells | 10%, on, on | infill_wall_overlap, infill_combination, detect_floating_vertical_shell | applied |
+| Arc fitting, elephant foot, thin walls, gap closing | on, 0.1, on, 0.1 | enable_arc_fitting, elefant_foot_compensation, detect_thin_wall, slice_closing_radius | applied |
+| Avoid crossing walls | on | reduce_crossing_wall | applied |
+| Smooth coefficient, scarf angle | 80, 155 | smooth_coefficient, scarf_angle_threshold | applied |
+| Speeds mm/s: first layer 15, outer wall 60, inner wall 90, small perimeter 35, top surface 40, infill 100 (file 100-120), travel 160 | as listed | initial_layer_speed, outer_wall_speed, inner_wall_speed, small_perimeter_speed, top_surface_speed, sparse_infill_speed, travel_speed | applied |
+| Accelerations mm/s2: normal 2000, travel 4000, first layer 300, outer wall 1500, inner wall 2000, top surface 1500 | as listed | default_acceleration, travel_acceleration, initial_layer_acceleration, outer_wall_acceleration, inner_wall_acceleration, top_surface_acceleration | applied |
+| Skirt loops, brim width, brim gap | 2, 6, 0.15 | skirt_loops, brim_width, brim_object_gap | applied |
+| Prime tower | on, 40 mm, brim 4 | enable_prime_tower, prime_tower_width, prime_tower_brim_width | applied (choice below) |
+| Brim type | not in file | brim_type | SET BY HAND (value for the file's brim not confirmed; width and gap are set) |
+| Seam position "aligned_or_back" | | seam_position | SET BY HAND (no single confirmed value) |
+| Smart scarf seam type, scarf steps 10 | | seam_slope_type, steps key | SET BY HAND (value/key not confirmed; angle 155 applied) |
+| Max detour "10mm or 5%" | | max_travel_detour_distance | SET BY HAND (only a plain number is seen in real presets) |
+| Smooth speed transition | on | none confirmed | SET BY HAND |
+| Top/bottom thickness 1.2 mm | | top_shell_thickness, bottom_shell_thickness | SET BY HAND (conflicts with 3 layers x 0.3 = 0.9 mm; layer count applied, thickness left on base) |
+| Prime tower flush into support | on | none confirmed | SET BY HAND |
+| First layer infill speed | not in file | initial_layer_infill_speed | left on base (55), higher than first layer 15; consider lowering by hand |
+
+Prime tower choice: ON, 40 mm wide, 4 mm brim, for all three materials. Plant Vitamin and Detergent specify exactly this; Fire gives no prime tower spec ("not specified"). Bambu Studio only builds a tower when two or more filaments are used, so leaving it enabled changes nothing for single-material prints (including Fire) and matches the vendor value when it matters.
+
+Keys confirmed (read-only) against real presets on this machine: all emitted keys appear in system process presets under `%APPDATA%\BambuStudio\system\BBL\process` or in the user's own process presets under `%APPDATA%\BambuStudio\user\<id>\process` (the user's `timeplast_precision.json` already uses the 0.8 mm values, e.g. slice_closing_radius, prime_tower_brim_width, brim_object_gap). Not imported into the Bambu Studio GUI.
