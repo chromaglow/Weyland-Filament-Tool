@@ -28,7 +28,9 @@ class MaterialSettings:
     # Temperature settings
     nozzle_temperature: Optional[int] = None
     nozzle_temperature_initial_layer: Optional[int] = None
-    bed_temperature: Optional[int] = None
+    # Bambu Studio has no single bed temperature; each plate type has its own
+    # key plus an _initial_layer variant (the latter
+    # live in additional_settings).
     cool_plate_temp: Optional[int] = None
     eng_plate_temp: Optional[int] = None
     hot_plate_temp: Optional[int] = None
@@ -204,8 +206,8 @@ class ScrapedData:
             settings.nozzle_temperature = self.temperatures["nozzle"]
         if "nozzle_first_layer" in self.temperatures:
             settings.nozzle_temperature_initial_layer = self.temperatures["nozzle_first_layer"]
-        if "bed" in self.temperatures:
-            settings.bed_temperature = self.temperatures["bed"]
+        # Bed temperatures ("bed", "<plate>", "<plate>_initial_layer") are
+        # mapped to per-plate keys by ProfileBuilder, not here.
 
         # Map flow settings
         if "flow_ratio" in self.flow_settings:
