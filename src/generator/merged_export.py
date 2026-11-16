@@ -12,7 +12,7 @@ appear only in the report.
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
@@ -33,6 +33,34 @@ class KeyCheckError(ValueError):
         super().__init__("Refusing to write presets with invalid keys:\n" + "\n".join(lines))
 
 
+@dataclass(frozen=True)
+class TemplateDefault:
+    """A preset value no source supplied; it comes from the tool's template."""
+    key: str
+    value: str
+    template: str
+
+
+# Keys that identify or file the preset rather than describe the filament.
+_IDENTITY_KEYS = frozenset({
+    "name", "from", "inherits", "version", "instantiation", "filament_id", "setting_id",
+    "filament_settings_id", "filament_type", "filament_vendor", "compatible_printers",
+    "compatible_printers_condition", "compatible_prints", "compatible_prints_condition",
+})
+
+
+def template_defaults(preset: Dict[str, Any], result: MergeResult, material_type: str) -> List[TemplateDefault]:
+    """Preset keys that are neither sourced/derived values nor identity keys."""
+    template = f"generic_{material_type.lower()}"
+    out = []
+    for key, value in preset.items():
+        if key in result.filament or key in _IDENTITY_KEYS:
+            continue
+        text = ", ".join(_fmt(v) for v in value) if isinstance(value, list) else _fmt(value)
+        out.append(TemplateDefault(key, text, template))
+    return sorted(out, key=lambda d: d.key)
+
+
 @dataclass
 class ExportResult:
     filament_path: Path
@@ -40,6 +68,7 @@ class ExportResult:
     collected_path: Path
     report_path: Path
     merge_result: MergeResult
+    template_defaults: List[TemplateDefault] = field(default_factory=list)
 
 
 def build_filament_preset(result: MergeResult, name: str, material_type: str, manufacturer: str,
@@ -103,6 +132,8 @@ def export_merged(collected: CollectedSettings, out_dir: Union[str, Path], *, na
     if problems:
         raise KeyCheckError(problems)
 
+    defaults = template_defaults(filament, result, material_type)
+
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
 
@@ -114,5 +145,6 @@ def export_merged(collected: CollectedSettings, out_dir: Union[str, Path], *, na
     process_path = dump(out / f"{process['name']}.json", process) if process is not None else None
     collected_path = dump(out / f"{collected.material_id}.collected.json", collected.to_json())
     report_path = write_report(result, collected, out / f"{collected.material_id}.report.md",
-                               generated_at=generated_at, precedence=config.precedence)
-    return ExportResult(filament_path, process_path, collected_path, report_path, result)
+                               generated_at=generated_at, precedence=config.precedence,
+                              template_defaults=defaults)
+    return ExportResult(filament_path, process_path, collected_path, report_path, result, defaults)

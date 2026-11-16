@@ -57,7 +57,7 @@ Written into the output folder:
 | `<slug>.collected.json` | Every value found, with its source. |
 | `<slug>.report.md` | Read this. It shows where each value came from, which sources disagreed and who won, and the page items that were not mapped. |
 
-**"Assumption"** means a value that no source gave. The tool filled it in with a default. Check these by hand.
+**"Assumption"** means a value that no source gave. The tool filled it in from its own template for that material (named in the report). The console shows the count and the most print-relevant few; the report lists them all with their values. Check these by hand.
 
 ## Installing into Bambu Studio
 

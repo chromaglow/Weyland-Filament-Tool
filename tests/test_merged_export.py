@@ -103,3 +103,22 @@ def test_report_keeps_provenance_and_alternatives(tmp_path):
     c = collected(sv("filament_flow_ratio", 0.92, K.MAKER_PRODUCT_PAGE), sv("filament_flow_ratio", 0.95))
     text = run(c, tmp_path).report_path.read_text(encoding="utf-8")
     assert "https://example.test/p" in text and "0.92 (maker_product_page" in text
+
+
+def test_template_defaults_listed_as_assumptions_with_value_and_template(tmp_path):
+    res = run(collected(sv("filament_flow_ratio", 0.95)), tmp_path)
+    fil = load(res.filament_path)
+    keys = {d.key for d in res.template_defaults}
+    assert {"eng_plate_temp", "enable_pressure_advance", "filament_deretraction_speed"} <= keys
+    assert "filament_flow_ratio" not in keys  # sourced value keeps its status
+    assert not keys & {"name", "inherits", "from", "version", "filament_id", "setting_id",
+                       "filament_settings_id", "instantiation"}
+    section = res.report_path.read_text(encoding="utf-8").split("## Assumptions")[1].split("## Not emitted")[0]
+    assert "eng_plate_temp = 45" in section and "generic_pla" in section
+    assert fil["eng_plate_temp"] == ["45"]  # preset contents unchanged
+
+
+def test_derived_values_are_not_template_defaults(tmp_path):
+    res = run(collected(sv("bed_temperature", 70)), tmp_path)
+    keys = {d.key for d in res.template_defaults}
+    assert "eng_plate_temp" not in keys and "hot_plate_temp" not in keys

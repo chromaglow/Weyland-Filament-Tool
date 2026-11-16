@@ -94,6 +94,15 @@ def _import_notes(imp: ImportResult) -> List[str]:
     return notes
 
 
+MAX_DEFAULT_LINES = 8
+_PRINT_RELEVANT = ("temp", "bed", "flow", "fan", "cooling", "volumetric")
+
+
+def _default_rank(d) -> tuple:
+    """Print-relevant keys (temperatures, bed, flow, cooling) first, then alphabetical."""
+    return (not any(w in d.key for w in _PRINT_RELEVANT), d.key)
+
+
 def _summarise(say, result, info, out_dir: Path) -> None:
     merged = result.merge_result
     say(f"Wrote to {out_dir}:")
@@ -107,9 +116,15 @@ def _summarise(say, result, info, out_dir: Path) -> None:
         say(f"  {v.key} = {v.value} from {v.winner.source_id}; over {beaten}")
     if len(contested) > MAX_CONTESTED_LINES:
         say(f"  ... {len(contested) - MAX_CONTESTED_LINES} more in the report")
-    say(f"Assumptions: {len(merged.assumptions)}")
+    defaults = result.template_defaults
+    say(f"Assumptions: {len(merged.assumptions) + len(defaults)}")
     for a in merged.assumptions:
         say(f"  {a.key} = {a.value} ({a.winner.note or 'assumed'})")
+    shown = sorted(defaults, key=_default_rank)[:MAX_DEFAULT_LINES]
+    for d in shown:
+        say(f"  {d.key} = {d.value} (template default, {d.template})")
+    if len(defaults) > len(shown):
+        say(f"  ... {len(defaults) - len(shown)} more template defaults in the report")
     notes = info["import_notes"]
     if notes:
         say(f"{len(notes)} imported file notes (not emitted or warnings); listed in {result.report_path.name}:")

@@ -31,7 +31,8 @@ def _fmt(value: object) -> str:
 
 
 def write_report(result: MergeResult, collected, out_path: Union[str, Path],
-                 generated_at: Optional[str] = None, precedence: Optional[Iterable] = None) -> Path:
+                 generated_at: Optional[str] = None, precedence: Optional[Iterable] = None,
+                 template_defaults: Iterable = ()) -> Path:
     stamp = generated_at or datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     order = ", ".join(getattr(k, "value", str(k)) for k in precedence) if precedence else "default"
     out = [f"# Research merge report: {collected.name}", f"Generated {stamp}. Precedence: {order}.", ""]
@@ -45,7 +46,11 @@ def write_report(result: MergeResult, collected, out_path: Union[str, Path],
 
     out.append("## Assumptions")
     out += [f"- {m.key} = {_fmt(m.value)}: no source publishes it; tool default."
-            for m in sorted(result.assumptions, key=lambda m: m.key)] or ["- none"]
+            for m in sorted(result.assumptions, key=lambda m: m.key)]
+    out += [f"- {d.key} = {d.value}: no source supplies it; template default from {d.template}."
+            for d in template_defaults]
+    if out[-1] == "## Assumptions":
+        out.append("- none")
     out.append("")
 
     out.append("## Not emitted")

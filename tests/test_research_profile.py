@@ -255,3 +255,28 @@ def test_import_surfaces_unknown_keys_and_warnings(tmp_path):
     assert "Missing Parent" in report
     assert "imported file notes" in text
     assert "bogus_future_key" in text and "Missing Parent" in text
+
+
+def test_console_counts_template_defaults_and_prints_print_relevant_few(tmp_path):
+    code, text = run(tmp_path, ["import", str(_legacy_file(tmp_path)), "--out", str(tmp_path / "out"),
+                                "--name", "Legacy"])
+    assert code == 0, text
+    report = (tmp_path / "out" / "legacy.report.md").read_text(encoding="utf-8")
+    section = report.split("## Assumptions")[1].split("## Not emitted")[0]
+    n = int(text.split("Assumptions: ")[1].split()[0])
+    assert n == section.count("\n- ") and n > 8
+    assert "enable_pressure_advance = 1" in section and "template default from generic_" in section
+    shown = [l for l in text.splitlines() if "(template default," in l]
+    assert 0 < len(shown) <= 8
+    assert any("temp" in l for l in shown)
+    assert f"{n - len(shown)} more template defaults in the report" in text
+
+
+def test_research_report_lists_template_defaults(tmp_path):
+    code, text = run(tmp_path, research_args(tmp_path))
+    assert code == 0, text
+    report = (tmp_path / "out" / "plant-vitamin.report.md").read_text(encoding="utf-8")
+    section = report.split("## Assumptions")[1].split("## Not emitted")[0]
+    assert "enable_pressure_advance = 1" in section and "filament_deretraction_speed" in section
+    n = int(text.split("Assumptions: ")[1].split()[0])
+    assert n == section.count("\n- ")
