@@ -30,6 +30,20 @@ Printer: Bambu Lab P1S, textured PEI plate. The user will fit the official 0.8 m
 - Small-nozzle estimates (not Timeplast-approved; 0.8 mm is the only official nozzle): 0.4 mm: max volumetric speed 4-6 mm3/s, layer 0.2-0.24, width 0.42-0.48, 225-230 C; 0.6 mm: 6-8 mm3/s, layer 0.25-0.3, 225-230 C. Recorded here only; no 0.4/0.6 preset is generated.
 - Bambu key names confirmed against the Bambu Studio presets installed here (read-only): nozzle_temperature_range_low/high, textured_plate_temp(_initial_layer), fan_min_speed, fan_max_speed, fan_cooling_layer_time, slow_down_layer_time, slow_down_for_layer_cooling, close_fan_the_first_x_layers, overhang_fan_speed, additional_cooling_fan_speed, filament_flow_ratio, filament_max_volumetric_speed, retraction/deretraction keys, enable_pressure_advance and pressure_advance (found in user presets), filament_notes (found in a user preset), filament_vendor/diameter/type.
 
+## Fire and Detergent presets (task wft-47025a.3)
+Built with the same loader and mapping as Plant Vitamin from the p1s_recommended block of each entry (same values: nozzle 230/range 220-235, textured PEI 90, flow 0.95, max vol. speed 12, PA 0.05, retraction 0.4 at 15, same cooling, aux fan 0). Presets: "TimePlast TimeMass Fire" (filament_id PTMFI01) and "TimePlast TimeMass Detergent" (PTMDE01). Installed by `_for-ezra/01-import-timemass-profile.cmd` together with Plant Vitamin.
+
+### Fire (timemass-fire-gen2)
+- Conflicts resolved per p1s_recommended (guide wins): flow 0.92 on the product page vs 0.95 used; textured PEI 75 on the Fire page vs 90 used (CryoGrip blue 75 is the page's recommended plate, notes only); product nozzle max 240 vs 235 used; drying 55C/24-48 h (product page and store-wide) vs 68C/155F >= 2 h used.
+- Warnings in filament_notes: drying, external spool not AMS, door open, 0.8 mm nozzle, plus the entry's safety list (ventilation, never leave a burning print unattended, combustion byproducts not fully tested, keep from children and pets).
+- Not in a filament preset: older manual 8 mm3/s max volumetric speed (nozzle unspecified; 12 used), process settings, ramming speed 3.
+
+### Detergent (timemass-detergent-gen6)
+- Gen 6 only. The entry's gen5_reference block (nozzle 230-245, bed 75, older 0.4 mm profile 210 C / flow 1.14 / PA 0.07 / bed 55, higher lather) is Soap Gen 5 data and is NOT used; filament_notes say so.
+- Conflicts resolved per p1s_recommended: textured PEI 95 store-wide vs 90 used; product nozzle max 240 vs 235; drying duration not on the product page, guide 68C/155F >= 2 h used; AMS "not recommended" (feed from external spool).
+- Warnings in filament_notes: drying, external spool, door open, 0.8 mm, safety list (external use only, ventilate, no Gen 6 SDS verified, etc.).
+- Prime tower (40 mm, brim 4) and other process settings are not carried by a filament preset.
+
 ## First-pass research (superseded where it conflicts with the above)
 | # | Finding | Confidence |
 |---|---------|------------|

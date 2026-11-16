@@ -94,6 +94,6 @@
     "TimePlast"
   ],
   "filament_notes": [
-    "TimeMass Plant Vitamin Gen 2. Dry 68C/155F at least 2 h before every print. Use the external spool, not AMS. Print with the printer door open. Official nozzle is 0.8 mm. Vendor CryoGrip plate bed temperature is 75C (not mapped to a Bambu plate key). Assumption: cool, engineering and smooth high-temp plate temperatures are not published by the vendor and keep the Generic PLA template defaults."
+    "TimeMass Plant Vitamin Gen 2. Dry 68C/155F at least 2 h before every print. Use the external spool, not AMS. Print with the printer door open. Official nozzle is 0.8 mm. Vendor CryoGrip plate bed temperature is 75C (not mapped to a Bambu plate key). Assumption: cool, engineering and smooth high-temp plate temperatures are not published by the vendor and keep the Generic PLA template defaults. Safety: Do not ingest; Ventilate; Not certified food/feed/drinking-water contact; Not a complete fertilizer."
   ]
 }

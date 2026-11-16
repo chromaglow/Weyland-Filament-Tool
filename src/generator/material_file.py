@@ -50,6 +50,12 @@ def build_filament_overrides(
         f"Assumption: cool, engineering and smooth high-temp plate temperatures are not "
         f"published by the vendor and keep the Generic PLA template defaults."
     )
+    safety = entry.get("use", {}).get("safety")
+    if safety:
+        notes += " Safety: " + "; ".join(safety) + "."
+    if "gen5_reference" in entry:
+        notes += (" Use Gen 6 values only; do not use the gen5_reference values "
+                  "(Gen 5 differs in temperature, flow and bed).")
 
     return {
         "nozzle_temperature": [rec["nozzle_temp_c"]],

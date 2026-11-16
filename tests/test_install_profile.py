@@ -71,3 +71,18 @@ def test_reports_missing_bambu_folder(profile, tmp_path):
     code = install_profile(profile, FakeBambu(tmp_path / "nope"), ask=lambda q: "y", say=out.append)
     assert code != 0
     assert out
+
+
+def test_all_timemass_presets_install_into_temp_folder_and_cmd_lists_them(bambu_root):
+    from pathlib import Path
+    root = Path(__file__).resolve().parents[1]
+    res = root / "docs" / "research" / "timemass-plant-vitamin"
+    names = ["TimePlast TimeMass Plant Vitamin", "TimePlast TimeMass Fire", "TimePlast TimeMass Detergent"]
+    cmd = (root / "_for-ezra" / "01-import-timemass-profile.cmd").read_text(encoding="utf-8")
+    for n in names:
+        assert n in cmd
+        code = install_profile(res / (n + ".json"), FakeBambu(bambu_root),
+                               ask=lambda q: "n", say=lambda m: None)
+        assert code == 0
+        installed = bambu_root / "user" / "123456" / "filament" / (n + ".json")
+        assert json.loads(installed.read_text(encoding="utf-8"))["name"] == n

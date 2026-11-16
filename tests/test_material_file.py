@@ -80,3 +80,55 @@ def test_built_profile_is_user_preset_and_valid(entry):
     for k, v in d.items():
         if k not in {"name", "from", "inherits", "version", "setting_id", "filament_id", "instantiation"}:
             assert isinstance(v, list) and all(isinstance(x, str) for x in v), k
+
+
+FIRE = "timemass-fire-gen2"
+DET = "timemass-detergent-gen6"
+
+
+def _build(mid, name, fid):
+    b = ProfileBuilder()
+    p = b.build_profile(name, "pla", "TimePlast",
+                        manual_overrides=build_filament_overrides(load_material(DATA, mid)),
+                        filament_id=fid)
+    assert p.validate() == (True, [])
+    return p.to_bambu_json()
+
+
+@pytest.mark.parametrize("mid,name,fid", [
+    (FIRE, "TimePlast TimeMass Fire", "PTMFI01"),
+    (DET, "TimePlast TimeMass Detergent", "PTMDE01"),
+])
+def test_fire_and_detergent_presets_validate_with_p1s_recommended_values(mid, name, fid):
+    d = _build(mid, name, fid)
+    assert d["name"] == name and d["filament_id"] == fid
+    assert d["from"] == "User" and d["instantiation"] == "true"
+    # p1s_recommended wins over the product-page values (flow 0.92, bed 75)
+    assert d["filament_flow_ratio"] == ["0.95"]
+    assert d["textured_plate_temp"] == ["90"]
+    assert d["textured_plate_temp_initial_layer"] == ["90"]
+    assert d["nozzle_temperature"] == ["230"]
+    assert d["nozzle_temperature_range_high"] == ["235"]
+    assert d["filament_max_volumetric_speed"] == ["12"]
+    assert d["pressure_advance"] == ["0.05"]
+    for k, v in d.items():
+        if k not in {"name", "from", "inherits", "version", "setting_id", "filament_id", "instantiation"}:
+            assert isinstance(v, list) and all(isinstance(x, str) for x in v), k
+
+
+def test_filament_ids_are_distinct():
+    ids = {"PTMPV01", "PTMFI01", "PTMDE01"}
+    assert len(ids) == 3
+
+
+def test_fire_notes_carry_safety_and_common_warnings():
+    n = build_filament_overrides(load_material(DATA, FIRE))["filament_notes"][0]
+    for text in ("68C/155F", "external spool", "door open", "0.8 mm", "ventilation", "unattended"):
+        assert text in n
+
+
+def test_detergent_notes_say_gen6_and_not_gen5():
+    n = build_filament_overrides(load_material(DATA, DET))["filament_notes"][0]
+    for text in ("68C/155F", "external spool", "door open", "0.8 mm", "Gen 6", "gen5_reference"):
+        assert text in n
+    assert "Gen 5" in n
