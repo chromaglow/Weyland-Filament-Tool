@@ -29,12 +29,45 @@ if "!MODE!"=="import" goto :doimport
 
 set "PAGE=https://www.timeplast.com/shop/p/timemass-plant-vitamin-filament"
 set /p PAGE=Manufacturer product page URL [%PAGE%]: 
-set "COMM=OrcaSlicer/OrcaSlicer:resources/profiles/BBL/filament/Bambu PLA Basic @BBL P1S 0.4 nozzle.json"
-set /p COMM=Community profile, owner/repo:path [Bambu PLA Basic on OrcaSlicer]: 
 echo.
-echo Researching. This reads two web pages. It can take a minute...
+set "MTYPE="
+:askmtype
+echo What kind of material is it? Examples: PLA, PETG, ABS, ASA, TPU, PA, PC.
+set /p MTYPE=Material type: 
+if "!MTYPE!"=="" goto :askmtype
 echo.
-python -m src.research_profile research --material "!MATERIAL!" --manufacturer "!MAKER!" --name "!NAME!" --source "manufacturer=!PAGE!" --source "community=!COMM!" --out "!OUT!"
+echo A second source is needed. It should be a profile for the SAME kind of
+echo material and the SAME nozzle size as yours. Settings the product page
+echo does not give are filled in from it.
+echo   - Community profile: a file on GitHub, written owner/repo:path
+echo   - Or a profile file you already have on your computer
+echo Example, only good for PLA with a 0.4 nozzle:
+echo   OrcaSlicer/OrcaSlicer:resources/profiles/BBL/filament/Bambu PLA Basic @BBL P1S 0.4 nozzle.json
+echo WARNING: a file for a different material or nozzle size mixes in settings that do not fit.
+echo.
+set "SRC2="
+set "COMM="
+set /p COMM=Paste a community owner/repo:path, or type EXAMPLE to use the one above, or press Enter to use a file on your computer: 
+if /i "!COMM!"=="EXAMPLE" set "COMM=OrcaSlicer/OrcaSlicer:resources/profiles/BBL/filament/Bambu PLA Basic @BBL P1S 0.4 nozzle.json"
+if not "!COMM!"=="" (
+  set "SRC2=community=!COMM!"
+  goto :gotsrc2
+)
+set "OWN="
+set /p OWN=Full path of a profile file you already have (.json): 
+set "OWN=!OWN:"=!"
+if "!OWN!"=="" (
+  echo No second source given. Research needs two. Nothing to do.
+  set FAILED=1
+  goto :finished
+)
+set "SRC2=import=!OWN!"
+:gotsrc2
+echo.
+echo Researching. This reads web pages, waiting 5 seconds between requests to the same site.
+echo Pages already saved in the last 7 days are reused. It can take a minute...
+echo.
+python -m src.research_profile research --material "!MATERIAL!" --material-type "!MTYPE!" --manufacturer "!MAKER!" --name "!NAME!" --source "manufacturer=!PAGE!" --source "!SRC2!" --out "!OUT!"
 if errorlevel 1 set FAILED=1
 goto :finished
 
@@ -75,7 +108,7 @@ echo Please make sure Bambu Studio is closed. Installing...
 if "!MODE!"=="import" (
   python -m src.research_profile import "!FILE!" --manufacturer "!MAKER!" --name "!NAME!" --out "!OUT!" --install
 ) else (
-  python -m src.research_profile research --material "!MATERIAL!" --manufacturer "!MAKER!" --name "!NAME!" --source "manufacturer=!PAGE!" --source "community=!COMM!" --out "!OUT!" --install
+  python -m src.research_profile research --material "!MATERIAL!" --material-type "!MTYPE!" --manufacturer "!MAKER!" --name "!NAME!" --source "manufacturer=!PAGE!" --source "!SRC2!" --out "!OUT!" --install
 )
 if errorlevel 1 (
   echo Install FAILED or was declined. See the message above.
