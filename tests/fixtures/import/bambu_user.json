@@ -1,0 +1,18 @@
+{
+    "name": "Acme PLA Test",
+    "from": "User",
+    "inherits": "Generic PLA",
+    "version": "1.6.0.2",
+    "filament_id": "PACME01",
+    "filament_settings_id": ["Acme PLA Test"],
+    "nozzle_temperature": ["215"],
+    "nozzle_temperature_initial_layer": ["220"],
+    "textured_plate_temp": ["nil"],
+    "cool_plate_temp": ["55"],
+    "filament_vendor": ["Acme"],
+    "filament_flow_ratio": ["0.98"],
+    "filament_colour": ["#112233"],
+    "compatible_printers": ["Bambu Lab P1S 0.4 nozzle", "Bambu Lab P1S 0.6 nozzle"],
+    "bed_temperature": ["60"],
+    "x_mystery_key": ["a", "b"]
+}

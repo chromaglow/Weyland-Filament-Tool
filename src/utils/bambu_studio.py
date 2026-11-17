@@ -101,6 +101,32 @@ class BambuStudioIntegration:
 
         return directories
 
+    def get_process_directories(self) -> List[Path]:
+        """Get all existing user process-preset directories for all devices"""
+        if not self.bambu_studio_path:
+            return []
+        dirs = [self.bambu_studio_path / "user" / d / "process" for d in self.device_ids]
+        return [d for d in dirs if d.exists()]
+
+    def import_process_profile(self, profile_path: Path) -> bool:
+        """Copy a process preset into every existing user process folder"""
+        if not profile_path.exists():
+            logger.error(f"Profile file not found: {profile_path}")
+            return False
+        targets = self.get_process_directories()
+        if not targets:
+            logger.error("No Bambu Studio process directories found")
+            return False
+        success = True
+        for target_dir in targets:
+            try:
+                shutil.copy2(profile_path, target_dir / profile_path.name)
+                logger.info(f"Imported process preset to: {target_dir / profile_path.name}")
+            except Exception as e:
+                logger.error(f"Failed to import to {target_dir}: {e}")
+                success = False
+        return success
+
     def import_profile(self, profile_path: Path, device_id: Optional[str] = None) -> bool:
         """
         Import a profile to Bambu Studio

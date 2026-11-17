@@ -1,0 +1,24 @@
+{
+    "schema_version": "1.1",
+    "generated": "2026-11-16",
+    "materials": [
+        {
+            "id": "acme-pla",
+            "name": "Acme PLA",
+            "settings": {
+                "collected": {
+                    "nozzle_temperature": {
+                        "value": 215, "status": "published", "source_id": "acme-guide",
+                        "source_kind": "maker_guide", "source_url": "https://example.com/g",
+                        "retrieved_at": "2026-11-16T10:00:00Z", "raw": "215 C",
+                        "alternatives": [
+                            {"value": [205, 225], "status": "derived", "source_id": "acme-page",
+                             "source_kind": "maker_product_page", "source_url": null,
+                             "retrieved_at": "2026-11-16T10:00:00Z", "raw": "205-225"}
+                        ]
+                    }
+                }
+            }
+        }
+    ]
+}

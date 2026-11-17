@@ -1,0 +1,10 @@
+{
+    "type": "filament",
+    "name": "Acme PLA @BBL P1S",
+    "inherits": "Acme PLA @base",
+    "from": "system",
+    "setting_id": "GFSX01_00",
+    "instantiation": "true",
+    "fan_max_speed": ["90"],
+    "nozzle_temperature": ["210"]
+}

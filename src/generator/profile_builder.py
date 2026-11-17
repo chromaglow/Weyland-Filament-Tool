@@ -16,6 +16,10 @@ from src.utils.bambu_studio import get_bambu_integration
 
 logger = get_logger()
 
+BED_PLATES = ("cool_plate", "eng_plate", "hot_plate", "textured_plate")
+# Plates filled from a single unqualified bed value (cool plate excluded)
+BED_DERIVED_PLATES = ("eng_plate", "hot_plate", "textured_plate")
+
 
 class ProfileBuilder:
     """Builds Bambu Studio filament profiles from templates and scraped data"""
@@ -27,6 +31,8 @@ class ProfileBuilder:
         self.config = get_config()
         self.comparator = ProfileComparator()
         self.last_comparison: Optional[ComparisonResult] = None
+        # Plate keys filled from a single unqualified bed value in the last build
+        self.last_derived_keys: List[str] = []
 
     def build_profile(
         self,
@@ -34,7 +40,8 @@ class ProfileBuilder:
         material_type: str,
         manufacturer: str,
         scraped_data: Optional[List[ScrapedData]] = None,
-        manual_overrides: Optional[Dict[str, Any]] = None
+        manual_overrides: Optional[Dict[str, Any]] = None,
+        filament_id: Optional[str] = None
     ) -> FilamentProfile:
         """
         Build a complete filament profile
@@ -45,6 +52,7 @@ class ProfileBuilder:
             manufacturer: Manufacturer name
             scraped_data: List of scraped data from various sources
             manual_overrides: Manual override settings
+            filament_id: Explicit filament_id; generated from material type if None
 
         Returns:
             Complete FilamentProfile object
@@ -70,7 +78,8 @@ class ProfileBuilder:
         settings = self._merge_settings(template, scraped_data, manual_overrides)
 
         # Generate IDs
-        filament_id = self.id_generator.generate_filament_id(material_type)
+        if filament_id is None:
+            filament_id = self.id_generator.generate_filament_id(material_type)
         setting_id = self.id_generator.generate_setting_id(material_type, manufacturer)
 
         # Get inheritance base
@@ -117,6 +126,8 @@ class ProfileBuilder:
         Returns:
             Merged MaterialSettings object
         """
+        self.last_derived_keys = []
+
         # Start with template
         merged = MaterialSettings()
 
@@ -129,12 +140,71 @@ class ProfileBuilder:
             for data in sorted_data:
                 settings = data.to_material_settings()
                 self._apply_settings(merged, settings, overwrite=False)
+            self._apply_bed_temperatures(merged, sorted_data)
 
         # Apply manual overrides (highest priority)
         if manual_overrides:
             self._apply_dict_to_settings(merged, manual_overrides)
 
+        # Bambu Studio has no "bed_temperature" key; never emit it
+        merged.additional_settings.pop("bed_temperature", None)
+
         return merged
+
+    def _apply_bed_temperatures(
+        self,
+        settings: MaterialSettings,
+        sorted_data: List[ScrapedData]
+    ):
+        """
+        Map scraped bed temperatures onto Bambu's per-plate keys.
+
+        Explicit per-plate values ("cool_plate", "eng_plate", "hot_plate",
+        "textured_plate", optionally "<plate>_initial_layer") fill the matching
+        <plate>_temp / <plate>_temp_initial_layer keys; with no explicit initial
+        layer value the initial layer follows the plate value.
+
+        Rule for a single unqualified bed value ("bed", product decision): it
+        fills the eng, hot and textured plates (and their initial-layer keys)
+        and those keys are recorded in self.last_derived_keys as derived. The
+        cool plate keeps its template value because a single bed number is a
+        hot-bed figure and would be wrong for the low-temperature cool plate.
+
+        Sources are in descending confidence; the first source to supply a
+        key wins. Scraped values replace template values.
+        """
+        explicit = set()
+        derived = set()
+
+        def put(key, value, is_derived=False):
+            if key in explicit:
+                return
+            if key.endswith("_initial_layer"):
+                settings.additional_settings[key] = value
+            else:
+                setattr(settings, key, value)
+            explicit.add(key)
+            if is_derived:
+                derived.add(key)
+
+        for data in sorted_data:
+            temps = data.temperatures
+            for plate in BED_PLATES:
+                base = temps.get(plate)
+                initial = temps.get(f"{plate}_initial_layer", base)
+                if base is not None:
+                    put(f"{plate}_temp", base)
+                if initial is not None:
+                    put(f"{plate}_temp_initial_layer", initial)
+            bed = temps.get("bed")
+            if bed is not None:
+                for plate in BED_DERIVED_PLATES:
+                    for suffix in ("", "_initial_layer"):
+                        key = f"{plate}_temp{suffix}"
+                        if key not in explicit:
+                            put(key, bed, is_derived=True)
+
+        self.last_derived_keys = sorted(derived)
 
     def _apply_dict_to_settings(self, settings: MaterialSettings, data: Dict[str, Any]):
         """

@@ -7,6 +7,20 @@ from typing import Optional, List, Dict, Any
 from datetime import datetime
 
 
+def _to_string_array(value: Any) -> List[str]:
+    """Bambu filament JSON stores every value as an array of strings"""
+    values = value if isinstance(value, list) else [value]
+    return [str(int(v)) if isinstance(v, bool) else str(v) for v in values]
+
+
+# Keys that identify the preset itself. Template values for these must never
+# override the profile's own values.
+PRESET_IDENTITY_KEYS = frozenset({
+    "name", "from", "inherits", "version", "filament_settings_id",
+    "filament_id", "setting_id", "instantiation",
+})
+
+
 @dataclass
 class MaterialSettings:
     """Material-specific print settings"""
@@ -14,7 +28,9 @@ class MaterialSettings:
     # Temperature settings
     nozzle_temperature: Optional[int] = None
     nozzle_temperature_initial_layer: Optional[int] = None
-    bed_temperature: Optional[int] = None
+    # Bambu Studio has no single bed temperature; each plate type has its own
+    # key plus an _initial_layer variant (the latter
+    # live in additional_settings).
     cool_plate_temp: Optional[int] = None
     eng_plate_temp: Optional[int] = None
     hot_plate_temp: Optional[int] = None
@@ -52,13 +68,12 @@ class MaterialSettings:
 
         for key, value in self.__dict__.items():
             if key == 'additional_settings':
-                result.update(value)
+                continue
             elif value is not None:
-                # Convert lists to JSON array format if needed
-                if isinstance(value, list):
-                    result[key] = [str(v) for v in value]
-                else:
-                    result[key] = str(value) if not isinstance(value, (int, float, bool)) else value
+                result[key] = _to_string_array(value)
+
+        for key, value in self.additional_settings.items():
+            result[key] = _to_string_array(value)
 
         return result
 
@@ -119,8 +134,12 @@ class FilamentProfile:
         if self.instantiation:
             result["instantiation"] = self.instantiation
 
-        # Merge material settings
-        result.update(self.settings.to_dict())
+        # Merge material settings; identity keys leaked from templates
+        # (name, from: System, instantiation: false, filament_id: GFL99) are
+        # dropped so the profile stays a user preset with its own identity.
+        for key, value in self.settings.to_dict().items():
+            if key not in PRESET_IDENTITY_KEYS:
+                result[key] = value
 
         return result
 
@@ -144,8 +163,15 @@ class FilamentProfile:
         if self.settings.nozzle_temperature is None:
             errors.append("Nozzle temperature is required")
 
-        if self.settings.bed_temperature is None:
-            errors.append("Bed temperature is required")
+        # Bambu filament JSON has per-plate temperatures, not "bed_temperature"
+        plate_temps = (
+            self.settings.cool_plate_temp,
+            self.settings.eng_plate_temp,
+            self.settings.hot_plate_temp,
+            self.settings.textured_plate_temp,
+        )
+        if all(t is None for t in plate_temps):
+            errors.append("At least one plate temperature is required")
 
         return (len(errors) == 0, errors)
 
@@ -180,8 +206,8 @@ class ScrapedData:
             settings.nozzle_temperature = self.temperatures["nozzle"]
         if "nozzle_first_layer" in self.temperatures:
             settings.nozzle_temperature_initial_layer = self.temperatures["nozzle_first_layer"]
-        if "bed" in self.temperatures:
-            settings.bed_temperature = self.temperatures["bed"]
+        # Bed temperatures ("bed", "<plate>", "<plate>_initial_layer") are
+        # mapped to per-plate keys by ProfileBuilder, not here.
 
         # Map flow settings
         if "flow_ratio" in self.flow_settings:

@@ -1,0 +1,99 @@
+{
+  "name": "TimePlast TimeMass Plant Vitamin",
+  "from": "User",
+  "inherits": "Generic PLA",
+  "version": "1.6.0.2",
+  "filament_settings_id": [
+    "TimePlast TimeMass Plant Vitamin"
+  ],
+  "filament_id": "PTMPV01",
+  "setting_id": "GFLS00_TimePlast_01",
+  "instantiation": "true",
+  "nozzle_temperature": [
+    "230"
+  ],
+  "nozzle_temperature_initial_layer": [
+    "230"
+  ],
+  "cool_plate_temp": [
+    "35"
+  ],
+  "eng_plate_temp": [
+    "45"
+  ],
+  "hot_plate_temp": [
+    "65"
+  ],
+  "textured_plate_temp": [
+    "90"
+  ],
+  "filament_flow_ratio": [
+    "0.95"
+  ],
+  "filament_max_volumetric_speed": [
+    "12"
+  ],
+  "filament_shrink": [
+    "99.5%"
+  ],
+  "enable_pressure_advance": [
+    "1"
+  ],
+  "pressure_advance": [
+    "0.05"
+  ],
+  "filament_retraction_length": [
+    "0.4"
+  ],
+  "filament_retraction_speed": [
+    "15"
+  ],
+  "filament_deretraction_speed": [
+    "15"
+  ],
+  "fan_cooling_layer_time": [
+    "100"
+  ],
+  "hot_plate_temp_initial_layer": [
+    "65"
+  ],
+  "nozzle_temperature_range_low": [
+    "220"
+  ],
+  "nozzle_temperature_range_high": [
+    "235"
+  ],
+  "textured_plate_temp_initial_layer": [
+    "90"
+  ],
+  "close_fan_the_first_x_layers": [
+    "3"
+  ],
+  "fan_min_speed": [
+    "0"
+  ],
+  "fan_max_speed": [
+    "15"
+  ],
+  "slow_down_layer_time": [
+    "8"
+  ],
+  "overhang_fan_speed": [
+    "15"
+  ],
+  "slow_down_for_layer_cooling": [
+    "1"
+  ],
+  "additional_cooling_fan_speed": [
+    "0"
+  ],
+  "filament_diameter": [
+    "1.75"
+  ],
+  "filament_vendor": [
+    "TimePlast"
+  ],
+  "filament_notes": [
+    "TimeMass Plant Vitamin Gen 2. Dry 68C/155F at least 2 h before every print. Use the external spool, not AMS. Print with the printer door open. Official nozzle is 0.8 mm. Vendor CryoGrip plate bed temperature is 75C (not mapped to a Bambu plate key). Assumption: cool, engineering and smooth high-temp plate temperatures are not published by the vendor and keep the Generic PLA template defaults. Safety: Do not ingest; Ventilate; Not certified food/feed/drinking-water contact; Not a complete fertilizer."
+  ]
+}

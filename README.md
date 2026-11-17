@@ -47,6 +47,11 @@ run.bat
 python src/main.py
 ```
 
+## 🔬 Research or import a profile
+
+Research a filament from web sources or import an existing profile: see [docs/how-to-research-profile.md](docs/how-to-research-profile.md).
+Or double-click `_for-ezra-research-profile.cmd`.
+
 ## 📖 Usage
 
 1. **Enter Filament Information**
