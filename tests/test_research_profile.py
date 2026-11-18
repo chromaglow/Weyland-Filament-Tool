@@ -36,10 +36,15 @@ class Fake:
         return TransportResponse(200, (FIX / "sources/source_b" / B_FILES[name]).read_bytes())
 
 
+SYS = FIX / "bambu_system"
+PRINTER = ["--printer", "Bambu Lab P1S", "--nozzle", "0.8"]
+
+
 def run(tmp_path, argv, transport=None, **kw):
     out = []
     code = main(argv + ["--cache-dir", str(tmp_path / "cache")], transport=transport or Fake(),
-                say=out.append, now=NOW, min_interval=0, system_dirs=[], **kw)
+                say=out.append, now=NOW, min_interval=0, system_dirs=[],
+                machine_dirs=[SYS / "machine"], process_dirs=[SYS / "process"], **kw)
     return code, "\n".join(out)
 
 
@@ -56,13 +61,13 @@ def test_research_two_sources_exports_checked_presets_and_report(tmp_path):
     filament = json.loads((out / "Plant Vitamin.json").read_text(encoding="utf-8"))
     assert check_keys(filament, "filament") == []
     assert filament["nozzle_temperature"][0] == "230"  # product page beats community 220
-    assert not (out / "Plant Vitamin process.json").exists()  # no source supplied process values
+    assert not (out / "Plant Vitamin process.json").exists()  # page has process values but no --printer/--nozzle was given
     report = (out / "plant-vitamin.report.md").read_text(encoding="utf-8")
     assert "timeplast-product-page" in report and "OrcaSlicer/OrcaSlicer" in report
     assert "Unmapped page items" in report
     assert str(out) in text
     assert "nozzle_temperature" in text and "timeplast-product-page" in text
-    assert "49 page items" in text and "report" in text
+    assert "11 page items" in text and "report" in text
     assert "Installed" not in text
 
 
@@ -167,7 +172,7 @@ def process_source(tmp_path):
 
 
 def test_process_values_produce_process_preset(tmp_path):
-    code, text = run(tmp_path, research_args(tmp_path, "--source", f"import={process_source(tmp_path)}"))
+    code, text = run(tmp_path, research_args(tmp_path, "--source", f"import={process_source(tmp_path)}", *PRINTER))
     assert code == 0, text
     process = json.loads((tmp_path / "out" / "Plant Vitamin process.json").read_text(encoding="utf-8"))
     assert process["layer_height"] == "0.3"
@@ -183,7 +188,7 @@ def _bambu(tmp_path):
 
 def test_install_writes_account_and_default_folders(tmp_path):
     root = _bambu(tmp_path)
-    code, text = run(tmp_path, research_args(tmp_path, "--source", f"import={process_source(tmp_path)}", "--install", "--bambu-dir", str(root)),
+    code, text = run(tmp_path, research_args(tmp_path, "--source", f"import={process_source(tmp_path)}", *PRINTER, "--install", "--bambu-dir", str(root)),
                      ask=lambda q: "n", running=lambda: False)
     assert code == 0, text
     for d in ("123456", "default"):
@@ -193,7 +198,7 @@ def test_install_writes_account_and_default_folders(tmp_path):
 
 def test_install_refuses_while_bambu_runs(tmp_path):
     root = _bambu(tmp_path)
-    code, text = run(tmp_path, research_args(tmp_path, "--source", f"import={process_source(tmp_path)}", "--install", "--bambu-dir", str(root)),
+    code, text = run(tmp_path, research_args(tmp_path, "--source", f"import={process_source(tmp_path)}", *PRINTER, "--install", "--bambu-dir", str(root)),
                      ask=lambda q: "y", running=lambda: True)
     assert code != 0 and "running" in text
     assert not (root / "user" / "default" / "filament" / "Plant Vitamin.json").exists()
@@ -319,3 +324,92 @@ def test_import_keeps_own_ids_unless_name_changes(tmp_path):
     ren = json.loads((tmp_path / "ren" / "Renamed Copy.json").read_text(encoding="utf-8"))
     assert ren["filament_id"] != original.get("filament_id")
     assert not SYSTEM_ID.match(ren["filament_id"]) and not SYSTEM_ID.match(ren["setting_id"])
+
+
+# --- process preset from the manufacturer page (wft-a5fea2) ---------------------------
+
+def _process(tmp_path, *extra):
+    code, text = run(tmp_path, research_args(tmp_path, *PRINTER, *extra))
+    assert code == 0, text
+    path = tmp_path / "out" / "Plant Vitamin process.json"
+    return json.loads(path.read_text(encoding="utf-8")), text
+
+
+def test_research_writes_process_preset_from_page_settings(tmp_path):
+    proc, text = _process(tmp_path)
+    assert check_keys(proc, "process") == []
+    assert proc["inherits"] == "0.40mm Standard @BBL X1C 0.8 nozzle"
+    assert proc["compatible_printers"] == ["Bambu Lab P1S 0.8 nozzle"]
+    for k, v in {"layer_height": "0.3", "initial_layer_print_height": "0.35", "wall_loops": "2",
+                 "sparse_infill_density": "20%", "sparse_infill_pattern": "grid",
+                 "infill_wall_overlap": "10%", "brim_width": "6", "enable_prime_tower": "1",
+                 "wall_infill_order": "inner wall/outer wall/infill", "line_width": "0.8"}.items():
+        assert proc[k] == v, k
+    assert proc["sparse_infill_speed"] == ["100", "100"]  # low end of 100-120
+    assert proc["travel_acceleration"] == ["4000", "4000"]
+    assert "Process preset:" in text and "inherits '0.40mm Standard @BBL X1C 0.8 nozzle'" in text
+
+
+def test_process_values_trace_to_the_page_in_the_report(tmp_path):
+    _process(tmp_path)
+    report = (tmp_path / "out" / "plant-vitamin.report.md").read_text(encoding="utf-8")
+    section = report.split("## Process settings")[1].split("## Ranges reduced")[0]
+    row = next(l for l in section.splitlines() if l.startswith("| layer_height |"))
+    assert "timeplast-product-page" in row and PAGE_URL in row and "Layer Height: 0.3 mm" in row and "published" in row
+    row = next(l for l in section.splitlines() if l.startswith("| sparse_infill_speed |"))
+    assert "| 100 | derived |" in row and "Infill: 100" in row and "120 mm/s" in row
+    unmapped = report.split("## Unmapped page items")[1]
+    assert "Seam Position" in unmapped and "Layer Height" not in unmapped
+
+
+def test_process_preset_is_used_with_a_different_printer(tmp_path):
+    code, text = run(tmp_path, research_args(tmp_path, "--printer", "Bambu Lab A1", "--nozzle", "0.4"))
+    assert code == 0, text
+    proc = json.loads((tmp_path / "out" / "Plant Vitamin process.json").read_text(encoding="utf-8"))
+    assert proc["inherits"] == "0.20mm Standard @BBL A1"
+    assert proc["compatible_printers"] == ["Bambu Lab A1 0.4 nozzle"]
+    assert proc["outer_wall_speed"] == ["60"]
+
+
+def test_parent_process_flag_overrides_default(tmp_path):
+    proc, _ = _process(tmp_path, "--parent-process", "0.20mm Standard @BBL A1")
+    assert proc["inherits"] == "0.20mm Standard @BBL A1"
+
+
+def test_no_printer_means_no_process_preset_and_a_clear_message(tmp_path):
+    code, text = run(tmp_path, research_args(tmp_path))
+    assert code == 0, text
+    assert not (tmp_path / "out" / "Plant Vitamin process.json").exists()
+    assert "no printer and nozzle size were given" in text
+    report = (tmp_path / "out" / "plant-vitamin.report.md").read_text(encoding="utf-8")
+    assert "no process preset was written" in report
+
+
+def test_unknown_printer_is_a_one_line_error_and_writes_nothing(tmp_path):
+    code, text = run(tmp_path, research_args(tmp_path, "--printer", "Bambu Lab P1S", "--nozzle", "0.6"))
+    assert code == 1 and text.startswith("Error:") and "P1S 0.6 nozzle" in text and chr(10) not in text
+    assert not (tmp_path / "out").exists()
+
+
+def test_nozzle_without_printer_is_a_usage_error(tmp_path):
+    code, text = run(tmp_path, research_args(tmp_path, "--nozzle", "0.8"))
+    assert code == 2 and "--printer" in text
+
+
+def test_import_with_no_process_values_writes_no_process_preset_and_says_so(tmp_path):
+    code, text = run(tmp_path, ["import", str(_legacy_file(tmp_path)), "--out", str(tmp_path / "out"),
+                                "--name", "Legacy", *PRINTER])
+    assert code == 0, text
+    assert not list((tmp_path / "out").glob("*process*"))
+    assert "no process preset" in text.lower()
+    assert "No source gave process settings" in (tmp_path / "out" / "legacy.report.md").read_text(encoding="utf-8")
+
+
+def test_install_puts_page_process_preset_next_to_filament_preset(tmp_path):
+    root = _bambu(tmp_path)
+    code, text = run(tmp_path, research_args(tmp_path, *PRINTER, "--install", "--bambu-dir", str(root)),
+                     ask=lambda q: "n", running=lambda: False)
+    assert code == 0, text
+    for d in ("123456", "default"):
+        assert (root / "user" / d / "filament" / "Plant Vitamin.json").exists()
+        assert (root / "user" / d / "process" / "Plant Vitamin process.json").exists()

@@ -7,7 +7,8 @@ This tool builds a Bambu Studio filament preset in two ways. You can **research*
 ## Read this first (honest limits)
 
 - **Nothing has been run against the live websites yet.** The tests use saved copies. Your first real run is a real test. If a site changed, you may get an error.
-- The two web sources give you a **filament preset only**. There is no process (print settings) preset. The page's print settings are listed as "not mapped" in the report. A process preset only appears if one of your sources carries process values, such as an imported file.
+- The manufacturer page lists print settings (layer height, speeds, walls, infill, brim). When you give `--printer` and `--nozzle`, the tool turns the ones with an unambiguous Bambu meaning into a **process preset** next to the filament preset. On the Plant Vitamin page, 38 of the 49 items that used to be all "not mapped" now map; the other 11 stay in the report as "not mapped". Without `--printer` and `--nozzle` no process preset is written.
+- The process preset has not been tried in a real Bambu Studio yet. Open it there and check the values before printing.
 - Values are only as good as the sources. The report shows where every value came from.
 - Installing is **opt-in** (`--install`) and **Bambu Studio must be closed**.
 
@@ -27,6 +28,19 @@ Source kinds:
 - `manufacturer=<web page address>`
 - `community=<owner/repo:path to the file>` or a direct "raw" file address
 - `import=<file on your computer>` (optional extra source)
+
+**Process preset (print settings).** Add the printer and the nozzle size. Neither is assumed:
+
+```
+... --printer "Bambu Lab P1S" --nozzle 0.8
+```
+
+- The parent preset is taken from that machine's own Bambu Studio preset (`Bambu Lab P1S 0.8 nozzle` names `0.40mm Standard @BBL X1C 0.8 nozzle` as its default). It is read from your Bambu Studio install; nothing is written there. The printer name can be given with or without "Bambu Lab".
+- `--parent-process "<preset name>"` picks a different parent (it must exist in Bambu Studio's system presets).
+- If the printer and nozzle size do not match a Bambu Studio machine preset, the command stops with a one-line error and writes nothing.
+- Speed ranges take the low end, infill density ranges the low end, and temperature ranges the midpoint. Those values are marked "derived" in the report. Everything else keeps the page's own number and is marked "published".
+- Not mapped, because the meaning is not certain or Bambu has no matching key: top/bottom thickness (it conflicts with the layer count), smooth speed transition, max detour for crossing, seam position, smart scarf seam, seam angle, seam steps, flush into support. Set these by hand.
+- If no source gives process settings, no process preset is written, and the report says so under "Process settings".
 
 Useful extras: `--name "<preset name>"`, `--offline` (use saved pages only), `--cache-dir <folder>`.
 
@@ -53,7 +67,7 @@ Written into the output folder:
 | File | What it is |
 |---|---|
 | `<name>.json` | The filament preset. This is the one Bambu Studio uses. |
-| `<name> process.json` | A process preset. Only written if a source had process values. |
+| `<name> process.json` | A process preset. Only written if a source had process values and you gave `--printer` and `--nozzle`. |
 | `<slug>.collected.json` | Every value found, with its source. |
 | `<slug>.report.md` | Read this. It shows where each value came from, which sources disagreed and who won, and the page items that were not mapped. |
 
@@ -61,7 +75,7 @@ Written into the output folder:
 
 ## Installing into Bambu Studio
 
-Off by default. Close Bambu Studio, then add `--install` to the same command:
+Off by default. Close Bambu Studio, then add `--install` to the same command. The process preset, when there is one, is installed next to the filament preset:
 
 ```
 python -m src.research_profile research ... --out output\research\Plant-Vitamin --install
@@ -77,6 +91,8 @@ It refuses to run while Bambu Studio is open, asks before overwriting a preset w
 | A "robots" message | The site asks programs not to read that page. The tool stops, on purpose. |
 | Fewer than two sources | Research needs two. Add another `--source`, for example `import=<file>`. |
 | Old data keeps coming back | Saved pages are reused for 7 days. Use a different or empty `--cache-dir`. |
+| `no Bambu Studio machine preset named ...` | `--printer`/`--nozzle` do not match a Bambu Studio printer. Use the model as Bambu Studio shows it, for example `Bambu Lab P1S` and `0.8`. |
+| `no printer and nozzle size were given` | The sources had print settings but no process preset was made. Add `--printer` and `--nozzle`. |
 | Bambu Studio is running | Close it and try again. |
 | GitHub says too many requests | Wait, or set the environment variable `WFT_GITHUB_TOKEN`. |
 | Exit code 1 | A handled error. The message says what. Exit code 2 means a typing mistake in the command. |

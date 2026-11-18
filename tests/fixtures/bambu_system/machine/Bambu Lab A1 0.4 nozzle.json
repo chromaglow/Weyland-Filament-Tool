@@ -1,0 +1,10 @@
+{
+  "name": "Bambu Lab A1 0.4 nozzle",
+  "inherits": "fdm_bbl_3dp_001_common",
+  "default_print_profile": "0.20mm Standard @BBL A1",
+  "printer_model": "Bambu Lab A1",
+  "printer_variant": "0.4",
+  "nozzle_diameter": [
+    "0.4"
+  ]
+}

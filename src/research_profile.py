@@ -2,7 +2,8 @@
 
   python -m src.research_profile research --material "<name>" \
       --source manufacturer=<url> --source community=<owner/repo:path|raw url> \
-      [--source import=<profile.json>] --out <dir> [--offline] [--install]
+      [--source import=<profile.json>] [--printer "Bambu Lab P1S" --nozzle 0.8
+      [--parent-process "<preset name>"]] --out <dir> [--offline] [--install]
   python -m src.research_profile import <profile.json> \
       [--merge-with manufacturer=<url> | community=<...> | import=<file>] --out <dir> [--install]
 
@@ -10,11 +11,14 @@ Collects settings from the sources, merges them (precedence per
 docs/design/research-merge-spec.md), and writes preset files plus a sources
 report to --out. Nothing is installed unless --install is given; then the
 existing installer (src/install_profile.py) is used for the filament preset
-and, when there are process values, the process preset.
+and, when there are process values, the process preset. A process preset needs
+--printer and --nozzle (the parent preset comes from that machine's Bambu Studio
+preset; --parent-process overrides it); without them none is written.
 """
 from __future__ import annotations
 
 import argparse
+import json
 import logging
 import re
 import sys
@@ -26,6 +30,7 @@ from src.data.merge import MergeConfig
 from src.data.sourced import CollectedSettings
 from src.generator.id_generator import IDGenerator
 from src.generator.merged_export import KeyCheckError, export_merged
+from src.generator.process_parent import ProcessParent, ProcessParentError, find_process_parent
 from src.importers.profile_import import UNKNOWN_KEYS_WARNING, ImportRejected, ImportResult, import_profile
 from src.install_profile import install_profile
 from src.scrapers.http_client import FetchError, PoliteFetcher, default_cache_dir
@@ -54,6 +59,18 @@ class _BambuAt(BambuStudioIntegration):
 
     def is_bambu_studio_running(self) -> bool:
         return self._running() if self._running else super().is_bambu_studio_running()
+
+
+def _process_parent(args, machine_dirs, process_dirs) -> Optional[ProcessParent]:
+    """The parent process preset for --printer/--nozzle; None when neither is given."""
+    if not args.printer and not args.nozzle:
+        if args.parent_process:
+            raise UsageError("--parent-process needs --printer and --nozzle")
+        return None
+    if not (args.printer and args.nozzle):
+        raise UsageError("--printer and --nozzle go together (printer model and nozzle size in mm)")
+    return find_process_parent(args.printer, args.nozzle, machine_dirs=machine_dirs, process_dirs=process_dirs,
+                               parent_override=args.parent_process)
 
 
 def _parse_source(text: str) -> tuple:
@@ -110,6 +127,10 @@ def _summarise(say, result, info, out_dir: Path) -> None:
     for p in (result.filament_path, result.process_path, result.collected_path, result.report_path):
         if p:
             say(f"  {p.name}")
+    if result.process_path:
+        say(f"Process preset: {len(merged.process)} settings, inherits '{_inherits(result.process_path)}'.")
+    elif result.process_note:
+        say(f"Process preset: {result.process_note}")
     contested = [v for v in merged.all_values() if v.losers]
     say(f"Contested settings: {len(contested)}")
     for v in contested[:MAX_CONTESTED_LINES]:
@@ -136,6 +157,10 @@ def _summarise(say, result, info, out_dir: Path) -> None:
     n = len(info["unmapped"])
     if n:
         say(f"{n} page items were not mapped to a setting; listed in {result.report_path.name}.")
+
+
+def _inherits(path: Path) -> str:
+    return json.loads(path.read_text(encoding="utf-8")).get("inherits", "")
 
 
 def _append_unmapped(report: Path, unmapped: List[str], import_notes: Sequence[str] = ()) -> None:
@@ -174,6 +199,9 @@ def _build_parser() -> argparse.ArgumentParser:
         sp.add_argument("--cache-dir", help="HTTP cache folder (default: user cache dir)")
         sp.add_argument("--install", action="store_true",
                         help="also install into Bambu Studio (off by default)")
+        sp.add_argument("--printer", help='printer for the process preset, e.g. "Bambu Lab P1S" (with --nozzle)')
+        sp.add_argument("--nozzle", help="nozzle size in mm for the process preset, e.g. 0.8 (with --printer)")
+        sp.add_argument("--parent-process", help="parent process preset name (default: the printer's own default)")
         sp.add_argument("--bambu-dir", help="Bambu Studio base folder (default: auto-detect)")
 
     r = sub.add_parser("research", help="collect from online sources, merge, export")
@@ -190,11 +218,13 @@ def _build_parser() -> argparse.ArgumentParser:
 def main(argv: Optional[Sequence[str]] = None, *, transport=None, say: Callable[[str], None] = print,
          ask: Callable[[str], str] = input, running: Optional[Callable[[], bool]] = None,
          now: Optional[str] = None, min_interval: Optional[float] = None,
-         system_dirs: Optional[list] = None) -> int:
+         system_dirs: Optional[list] = None, machine_dirs: Optional[list] = None,
+         process_dirs: Optional[list] = None) -> int:
     args = _build_parser().parse_args(sys.argv[1:] if argv is None else list(argv))
     now = now or datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     cache_dir = Path(args.cache_dir) if args.cache_dir else default_cache_dir()
     try:
+        parent = _process_parent(args, machine_dirs, process_dirs)
         if args.command == "research":
             sources = [_parse_source(s) for s in args.source]
             if len(sources) < 2:
@@ -217,10 +247,13 @@ def main(argv: Optional[Sequence[str]] = None, *, transport=None, say: Callable[
         info = _gather(sources, collected, offline=args.offline, cache_dir=cache_dir, transport=transport,
                        min_interval=min_interval, now=now, system_dirs=system_dirs)
         result = export_merged(collected, args.out, name=name, manufacturer=args.manufacturer,
-                               material_type=args.material_type, **keep_ids, config=MergeConfig(), generated_at=now)
+                               material_type=args.material_type, **keep_ids, process_parent=parent, config=MergeConfig(), generated_at=now)
     except UsageError as e:
         say(f"Error: {e}")
         return 2
+    except ProcessParentError as e:
+        say(f"Error: {e}")
+        return 1
     except KeyCheckError as e:
         say("Error: preset failed the key check, nothing written: "
             + "; ".join(f"{k}: {', '.join(v)}" for k, v in e.problems.items()))

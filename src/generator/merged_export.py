@@ -21,6 +21,7 @@ from src.data.report import write_report
 from src.data.sourced import CollectedSettings
 from src.generator import process_builder as pb
 from src.generator.bambu_keys import check_keys
+from src.generator.process_parent import ProcessParent
 from src.generator.profile_builder import ProfileBuilder
 
 
@@ -69,6 +70,7 @@ class ExportResult:
     report_path: Path
     merge_result: MergeResult
     template_defaults: List[TemplateDefault] = field(default_factory=list)
+    process_note: Optional[str] = None  # why no process preset was written, when none was
 
 
 def build_filament_preset(result: MergeResult, name: str, material_type: str, manufacturer: str,
@@ -92,39 +94,55 @@ def _fmt(value: Any) -> str:
     return str(value)
 
 
-def process_entry(result: MergeResult, name: str) -> Dict[str, Any]:
-    """Adapter: flat Bambu process keys -> process_builder's preset shape.
+# Process values Bambu writes with a percent sign; sources publish the bare number.
+_PERCENT_KEYS = frozenset({"sparse_infill_density", "infill_wall_overlap"})
 
-    Identity metadata and extruder variants come from process_builder; speed
-    and acceleration keys become per-variant arrays like its own output, all
-    other values are plain strings.
+
+def process_entry(result: MergeResult, name: str, parent: ProcessParent) -> Dict[str, Any]:
+    """Adapter: flat Bambu process keys -> a process preset under `parent`.
+
+    Identity, parent and printer come from the chosen ProcessParent (never a
+    built-in printer). Speed and acceleration keys become per-extruder-variant
+    arrays like Bambu's own presets; all other values are plain strings.
     """
+    n = len(parent.variants) if parent.variants else 1
     preset: Dict[str, Any] = {
         "name": name,
         "print_settings_id": name,
         "from": "User",
-        "inherits": pb.BASE_PRESET,
+        "inherits": parent.inherits,
         "version": pb.VERSION,
-        "compatible_printers": [pb.PRINTER],
-        "print_extruder_id": ["1"] * len(pb.VARIANTS),
-        "print_extruder_variant": list(pb.VARIANTS),
+        "compatible_printers": [parent.machine],
     }
+    if parent.variants:
+        preset["print_extruder_id"] = ["1"] * n
+        preset["print_extruder_variant"] = list(parent.variants)
     for key, value in result.process_overrides().items():
         text = _fmt(value)
+        if key in _PERCENT_KEYS and not text.endswith("%"):
+            text += "%"
         per_variant = "speed" in key or "acceleration" in key
-        preset[key] = [text] * len(pb.VARIANTS) if per_variant else text
+        preset[key] = [text] * n if per_variant else text
     return preset
 
 
 def export_merged(collected: CollectedSettings, out_dir: Union[str, Path], *, name: str,
                   manufacturer: str, material_type: str = "pla", filament_id: Optional[str] = None,
-                  setting_id: Optional[str] = None, process_name: Optional[str] = None, config: Optional[MergeConfig] = None,
+                  setting_id: Optional[str] = None, process_name: Optional[str] = None,
+                  process_parent: Optional[ProcessParent] = None, config: Optional[MergeConfig] = None,
                   generated_at: Optional[str] = None) -> ExportResult:
     config = config or MergeConfig()
     result = merge(collected, config)
 
     filament = build_filament_preset(result, name, material_type, manufacturer, filament_id, setting_id)
-    process = process_entry(result, process_name or f"{name} process") if result.process else None
+    process, process_note = None, None
+    if not result.process:
+        process_note = "No source gave process settings; no process preset written."
+    elif process_parent is None:
+        process_note = (f"{len(result.process)} process settings found but no printer and nozzle size were given, "
+                        "so no process preset was written (give --printer and --nozzle).")
+    else:
+        process = process_entry(result, process_name or f"{name} process", process_parent)
 
     problems = {"filament": check_keys(filament, "filament")}
     if process is not None:
@@ -147,5 +165,5 @@ def export_merged(collected: CollectedSettings, out_dir: Union[str, Path], *, na
     collected_path = dump(out / f"{collected.material_id}.collected.json", collected.to_json())
     report_path = write_report(result, collected, out / f"{collected.material_id}.report.md",
                                generated_at=generated_at, precedence=config.precedence,
-                              template_defaults=defaults)
-    return ExportResult(filament_path, process_path, collected_path, report_path, result, defaults)
+                              template_defaults=defaults, process_note=process_note)
+    return ExportResult(filament_path, process_path, collected_path, report_path, result, defaults, process_note)

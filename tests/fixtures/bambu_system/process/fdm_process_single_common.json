@@ -1,0 +1,10 @@
+{
+  "name": "fdm_process_single_common",
+  "inherits": "fdm_process_common",
+  "print_extruder_variant": [
+    "Direct Drive Standard"
+  ],
+  "print_extruder_id": [
+    "1"
+  ]
+}
