@@ -4,6 +4,7 @@ rem One-click research or import of a filament profile.
 rem - Research: collects settings from a manufacturer page and a community profile, merges them.
 rem - Import: reads a profile file you already have (Bambu or Orca) and re-exports it.
 rem - Output goes to output\research\<material>\ under the project folder (output\ is git-ignored).
+rem - When you give a printer and nozzle size, the page's print settings also become a process preset.
 rem - Nothing is installed into Bambu Studio unless you say yes at the very end.
 rem   Close Bambu Studio before you say yes.
 cd /d "%~dp0.."
@@ -36,6 +37,22 @@ echo What kind of material is it? Examples: PLA, PETG, ABS, ASA, TPU, PA, PC.
 set /p MTYPE=Material type: 
 if "!MTYPE!"=="" goto :askmtype
 echo.
+echo The page also lists print settings (layer height, speeds, walls, infill). To turn
+echo them into a process preset I need to know your printer and nozzle size.
+echo Press Enter at the printer question to skip the process preset.
+set "PRINTER="
+set /p PRINTER=Printer model, for example Bambu Lab P1S: 
+set "NOZZLE="
+set "PROCARGS="
+if not "!PRINTER!"=="" (
+  set /p NOZZLE=Nozzle size in mm, for example 0.4 or 0.8: 
+  if "!NOZZLE!"=="" (
+    echo No nozzle size given, so no process preset will be made.
+  ) else (
+    set PROCARGS=--printer "!PRINTER!" --nozzle "!NOZZLE!"
+  )
+)
+echo.
 echo A second source is needed. It should be a profile for the SAME kind of
 echo material and the SAME nozzle size as yours. Settings the product page
 echo does not give are filled in from it.
@@ -67,7 +84,7 @@ echo.
 echo Researching. This reads web pages, waiting 5 seconds between requests to the same site.
 echo Pages already saved in the last 7 days are reused. It can take a minute...
 echo.
-python -m src.research_profile research --material "!MATERIAL!" --material-type "!MTYPE!" --manufacturer "!MAKER!" --name "!NAME!" --source "manufacturer=!PAGE!" --source "!SRC2!" --out "!OUT!"
+python -m src.research_profile research --material "!MATERIAL!" --material-type "!MTYPE!" --manufacturer "!MAKER!" --name "!NAME!" --source "manufacturer=!PAGE!" --source "!SRC2!" !PROCARGS! --out "!OUT!"
 if errorlevel 1 set FAILED=1
 goto :finished
 
@@ -108,7 +125,7 @@ echo Please make sure Bambu Studio is closed. Installing...
 if "!MODE!"=="import" (
   python -m src.research_profile import "!FILE!" --manufacturer "!MAKER!" --name "!NAME!" --out "!OUT!" --install
 ) else (
-  python -m src.research_profile research --material "!MATERIAL!" --material-type "!MTYPE!" --manufacturer "!MAKER!" --name "!NAME!" --source "manufacturer=!PAGE!" --source "!SRC2!" --out "!OUT!" --install
+  python -m src.research_profile research --material "!MATERIAL!" --material-type "!MTYPE!" --manufacturer "!MAKER!" --name "!NAME!" --source "manufacturer=!PAGE!" --source "!SRC2!" !PROCARGS! --out "!OUT!" --install
 )
 if errorlevel 1 (
   echo Install FAILED or was declined. See the message above.

@@ -13,7 +13,7 @@ One tool-internal model for collected filament and process settings, where every
 | Statuses in the file today: `official_product_page`, `official_general_guide`, `not_published`, `estimate` | Read through a fixed mapping (below). The file is never rewritten with new status names. |
 | `MaterialSettings` / `FilamentProfile` (`src/data/models.py`) | Reused as the output target: merged filament-key winners are applied through `ProfileBuilder` `manual_overrides` (Bambu key names, array-of-string values via `_to_string_array`). `MaterialSettings.bed_temperature` is NOT used (see Bed temperature). |
 | `ProfileComparator` (`src/data/comparison.py`) | Not reused. It merges `ScrapedData` on a fixed set of fields with confidence weighting and has no source-kind precedence, no provenance, no process keys. `merge()` is new; the comparator stays for the existing scrape path. |
-| `process_builder.build_process_preset()` | Process-key winners feed this path. It currently reads the collected-file layout; .10 adds a thin adapter from `CollectedSettings` process keys to its `entry` shape (or an overrides dict). |
+| `process_builder.build_process_preset()` | Process-key winners feed this path. It currently reads the collected-file layout; .10 adds a thin adapter from `CollectedSettings` process keys to its `entry` shape (or an overrides dict). wft-a5fea2 added printer and nozzle as inputs: `--printer`/`--nozzle` pick the machine preset and its `default_print_profile` as parent (`src/generator/process_parent.py`), and the manufacturer page adapter now emits process keys. |
 
 ## Data model
 

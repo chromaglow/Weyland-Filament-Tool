@@ -7,6 +7,11 @@ from src.data.merge import MergeConfig, merge
 from src.data.sourced import CollectedSettings, SourceKind, SourcedValue
 from src.generator.bambu_keys import check_keys
 from src.generator.merged_export import KeyCheckError, export_merged
+from src.generator.process_parent import ProcessParent
+
+P1S_08 = ProcessParent("Bambu Lab P1S 0.8 nozzle", "0.40mm Standard @BBL X1C 0.8 nozzle",
+                       ["Direct Drive Standard", "Direct Drive High Flow"])
+A1_04 = ProcessParent("Bambu Lab A1 0.4 nozzle", "0.20mm Standard @BBL A1", ["Direct Drive Standard"])
 
 K = SourceKind
 
@@ -41,7 +46,7 @@ def test_partition_and_four_files_written(tmp_path):
         sv("layer_height", 0.3),
         sv("outer_wall_speed", 120),
     )
-    res = run(c, tmp_path)
+    res = run(c, tmp_path, process_parent=P1S_08)
     fil, proc = load(res.filament_path), load(res.process_path)
     assert fil["filament_flow_ratio"] == ["0.95"]
     assert fil["nozzle_temperature"] == ["220"]
@@ -122,3 +127,46 @@ def test_derived_values_are_not_template_defaults(tmp_path):
     res = run(collected(sv("bed_temperature", 70)), tmp_path)
     keys = {d.key for d in res.template_defaults}
     assert "eng_plate_temp" not in keys and "hot_plate_temp" not in keys
+
+
+def test_process_preset_inherits_chosen_parent_and_printer(tmp_path):
+    res = run(collected(sv("layer_height", 0.3), sv("outer_wall_speed", 60)), tmp_path, process_parent=A1_04)
+    proc = load(res.process_path)
+    assert proc["inherits"] == "0.20mm Standard @BBL A1"
+    assert proc["compatible_printers"] == ["Bambu Lab A1 0.4 nozzle"]
+    assert proc["print_extruder_variant"] == ["Direct Drive Standard"] and proc["print_extruder_id"] == ["1"]
+    assert proc["outer_wall_speed"] == ["60"]
+    assert "X1C" not in json.dumps(proc) and "P1S" not in json.dumps(proc)
+
+
+def test_parent_without_variants_writes_plain_single_value_arrays(tmp_path):
+    parent = ProcessParent("Bambu Lab A1 0.4 nozzle", "0.20mm Standard @BBL A1", None)
+    proc = load(run(collected(sv("outer_wall_speed", 60)), tmp_path, process_parent=parent).process_path)
+    assert proc["outer_wall_speed"] == ["60"]
+    assert "print_extruder_variant" not in proc and "print_extruder_id" not in proc
+
+
+def test_percent_keys_get_their_percent_sign(tmp_path):
+    proc = load(run(collected(sv("sparse_infill_density", (20, 25)), sv("infill_wall_overlap", 10)),
+                    tmp_path, process_parent=P1S_08).process_path)
+    assert proc["sparse_infill_density"] == "20%" and proc["infill_wall_overlap"] == "10%"
+
+
+def test_already_percent_text_is_not_doubled(tmp_path):
+    proc = load(run(collected(sv("sparse_infill_density", "15%")), tmp_path, process_parent=P1S_08).process_path)
+    assert proc["sparse_infill_density"] == "15%"
+
+
+def test_process_values_without_parent_write_no_process_preset_and_say_why(tmp_path):
+    res = run(collected(sv("layer_height", 0.3)), tmp_path)
+    assert res.process_path is None
+    assert "no printer" in res.process_note.lower()
+    assert "layer_height" in res.report_path.read_text(encoding="utf-8").split("## Process settings")[1]
+    assert "no process preset" in res.report_path.read_text(encoding="utf-8").lower()
+
+
+def test_no_process_values_note_and_report_line(tmp_path):
+    res = run(collected(sv("filament_flow_ratio", 0.95)), tmp_path, process_parent=P1S_08)
+    assert res.process_path is None and "no source" in res.process_note.lower()
+    report = res.report_path.read_text(encoding="utf-8")
+    assert "No source gave process settings" in report.split("## Process settings")[1].split("## Ranges")[0]

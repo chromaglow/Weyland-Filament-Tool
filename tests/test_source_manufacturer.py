@@ -1,5 +1,6 @@
 """Source A adapter tests: saved fixtures + fake transport only, no live network."""
 import logging
+import re
 from pathlib import Path
 
 import pytest
@@ -152,3 +153,65 @@ def test_collect_from_url_robots_disallow(tmp_path):
     f = PoliteFetcher(cache_dir=tmp_path / "c", min_interval=0, transport=transport)
     with pytest.raises(RobotsDisallowedError):
         collect_from_url(PV_URL, f, retrieved_at=NOW)
+
+
+# --- process settings from the printing guide (wft-a5fea2) ---------------------------
+
+PV_PROCESS = {
+    ("slice_closing_radius", 0.1), ("enable_arc_fitting", True), ("elefant_foot_compensation", 0.1),
+    ("wall_loops", 2), ("detect_thin_wall", True),
+    ("top_shell_layers", 3), ("bottom_shell_layers", 3),
+    ("top_surface_pattern", "monotonic"), ("bottom_surface_pattern", "monotonic"),
+    ("wall_infill_order", "inner wall/outer wall/infill"),
+    ("smooth_coefficient", 80), ("reduce_crossing_wall", True),
+    ("layer_height", 0.3), ("initial_layer_print_height", 0.35),
+    ("line_width", 0.8), ("outer_wall_line_width", 0.8), ("inner_wall_line_width", 0.8),
+    ("sparse_infill_line_width", 0.8), ("top_surface_line_width", 0.8),
+    ("initial_layer_line_width", 0.8), ("internal_solid_infill_line_width", 0.8),
+    ("infill_wall_overlap", 10), ("infill_combination", True),
+    ("detect_floating_vertical_shell", True),
+    ("sparse_infill_density", (20, 25)), ("sparse_infill_pattern", "grid"),
+    ("travel_speed", 160), ("initial_layer_speed", 15), ("outer_wall_speed", 60),
+    ("inner_wall_speed", 90), ("small_perimeter_speed", 35), ("top_surface_speed", 40),
+    ("sparse_infill_speed", (100, 120)),
+    ("default_acceleration", 2000), ("travel_acceleration", 4000), ("initial_layer_acceleration", 300),
+    ("outer_wall_acceleration", 1500), ("inner_wall_acceleration", 2000), ("top_surface_acceleration", 1500),
+    ("skirt_loops", 2), ("brim_width", 6), ("brim_object_gap", 0.15),
+    ("enable_prime_tower", True), ("prime_tower_width", 40), ("prime_tower_brim_width", 4),
+}
+
+
+def test_plant_vitamin_process_values(pv):
+    assert PV_PROCESS <= _vals(pv)
+
+
+def test_process_items_left_unmapped_with_their_text(pv):
+    joined = "\n".join(pv.unmapped)
+    for label in ("Top/Bottom Thickness", "Smooth Speed Transition", "Max Detour for Crossing",
+                  "Seam Position", "Smart Scarf Seam", "Seam Angle", "Seam Steps", "Flush Into Support"):
+        assert label in joined, label
+    for label in ("Layer Height", "Wall Loops", "Wall Order", "Infill First", "Brim Gap"):
+        assert label not in joined, label
+    assert len(pv.unmapped) == 11
+
+
+def test_speed_and_acceleration_with_same_label_are_told_apart_by_unit(pv):
+    assert _one(pv, "travel_speed").value == 160
+    assert _one(pv, "travel_acceleration").value == 4000
+    assert _one(pv, "outer_wall_speed").raw.endswith("60 mm/s")
+
+
+def test_wall_order_needs_both_items_to_map():
+    page, n = re.subn(r"(Infill First:(?:\s|&nbsp;|<[^>]+>)*)OFF", r"\g<1>ON", _html("plant_vitamin.html"))
+    assert n >= 1
+    res = parse_product_page(page, PV_URL, NOW)
+    assert "wall_infill_order" not in {v.key for v in res.settings.values}
+    assert any("Wall Order" in u for u in res.unmapped) and any("Infill First" in u for u in res.unmapped)
+
+
+def test_process_values_merge_as_process_with_low_end_of_ranges(pv):
+    m = merge(pv.settings)
+    assert m.process["sparse_infill_speed"].value == 100 and m.process["sparse_infill_speed"].status == "derived"
+    assert m.process["sparse_infill_density"].value == 20
+    assert m.process["layer_height"].value == 0.3 and m.process["layer_height"].status == "published"
+    assert not [k for k in m.unpartitioned]

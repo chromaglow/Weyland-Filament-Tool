@@ -32,12 +32,15 @@ def _fmt(value: object) -> str:
 
 def write_report(result: MergeResult, collected, out_path: Union[str, Path],
                  generated_at: Optional[str] = None, precedence: Optional[Iterable] = None,
-                 template_defaults: Iterable = ()) -> Path:
+                 template_defaults: Iterable = (), process_note: Optional[str] = None) -> Path:
     stamp = generated_at or datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     order = ", ".join(getattr(k, "value", str(k)) for k in precedence) if precedence else "default"
     out = [f"# Research merge report: {collected.name}", f"Generated {stamp}. Precedence: {order}.", ""]
     out += ["## Filament settings", *_table(result.filament.values()), ""]
-    out += ["## Process settings", *_table(result.process.values()), ""]
+    out += ["## Process settings", *_table(result.process.values())]
+    if process_note:
+        out += ["", process_note]
+    out.append("")
 
     ranged = sorted((m for m in result.all_values() if m.reduced_from), key=lambda m: m.key)
     out += ["## Ranges reduced", "| Key | Published range | Policy | Value |", "|---|---|---|---|"]
