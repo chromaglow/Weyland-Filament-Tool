@@ -144,3 +144,14 @@ def test_plate_values_are_string_arrays():
     assert len(keys) >= 7
     for k in keys:
         assert isinstance(data[k], list) and all(isinstance(x, str) for x in data[k])
+
+
+def test_explicit_filament_id_keeps_legacy_setting_id():
+    data = _build(filament_id="PACME01").to_bambu_json()
+    assert data["setting_id"].startswith("GFLS00_Acme_")
+
+
+def test_no_filament_id_derives_stable_ids_from_name():
+    a, b = _build().to_bambu_json(), _build().to_bambu_json()
+    assert (a["filament_id"], a["setting_id"]) == (b["filament_id"], b["setting_id"])
+    assert a["filament_id"].startswith("P") and a["setting_id"].startswith("P")

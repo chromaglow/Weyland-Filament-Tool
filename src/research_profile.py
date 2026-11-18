@@ -24,6 +24,7 @@ from typing import Callable, Dict, List, Optional, Sequence
 
 from src.data.merge import MergeConfig
 from src.data.sourced import CollectedSettings
+from src.generator.id_generator import IDGenerator
 from src.generator.merged_export import KeyCheckError, export_merged
 from src.importers.profile_import import UNKNOWN_KEYS_WARNING, ImportRejected, ImportResult, import_profile
 from src.install_profile import install_profile
@@ -199,16 +200,24 @@ def main(argv: Optional[Sequence[str]] = None, *, transport=None, say: Callable[
             if len(sources) < 2:
                 raise UsageError("research needs at least two sources (e.g. manufacturer=<url> and community=<repo:path>)")
             name = args.name or args.material
+            keep_ids = {}
             collected = CollectedSettings(material_id=_slug(args.material), name=name)
         else:
             sources = [("import", args.file)] + [_parse_source(s) for s in args.merge_with]
-            first = import_profile(args.file, system_dirs=system_dirs, retrieved_at=now).collected
+            imported = import_profile(args.file, system_dirs=system_dirs, retrieved_at=now)
+            first = imported.collected
             name = args.name or first.name
+            if name == first.name:  # an imported preset keeps its own ids unless renamed
+                keep_ids = {k: imported.meta[k] for k in ("filament_id", "setting_id") if imported.meta.get(k)}
+                if "filament_id" in keep_ids and "setting_id" not in keep_ids:
+                    keep_ids["setting_id"] = IDGenerator.derive_ids(name)[1]
+            else:
+                keep_ids = {}
             collected = CollectedSettings(material_id=_slug(name), name=name)
         info = _gather(sources, collected, offline=args.offline, cache_dir=cache_dir, transport=transport,
                        min_interval=min_interval, now=now, system_dirs=system_dirs)
         result = export_merged(collected, args.out, name=name, manufacturer=args.manufacturer,
-                               material_type=args.material_type, config=MergeConfig(), generated_at=now)
+                               material_type=args.material_type, **keep_ids, config=MergeConfig(), generated_at=now)
     except UsageError as e:
         say(f"Error: {e}")
         return 2
