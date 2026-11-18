@@ -41,7 +41,8 @@ class ProfileBuilder:
         manufacturer: str,
         scraped_data: Optional[List[ScrapedData]] = None,
         manual_overrides: Optional[Dict[str, Any]] = None,
-        filament_id: Optional[str] = None
+        filament_id: Optional[str] = None,
+        setting_id: Optional[str] = None
     ) -> FilamentProfile:
         """
         Build a complete filament profile
@@ -52,7 +53,9 @@ class ProfileBuilder:
             manufacturer: Manufacturer name
             scraped_data: List of scraped data from various sources
             manual_overrides: Manual override settings
-            filament_id: Explicit filament_id; generated from material type if None
+            filament_id: Explicit filament_id; derived from the name if None
+            setting_id: Explicit setting_id; derived from the name when no
+                filament_id is given, else the legacy counter scheme
 
         Returns:
             Complete FilamentProfile object
@@ -79,8 +82,11 @@ class ProfileBuilder:
 
         # Generate IDs
         if filament_id is None:
-            filament_id = self.id_generator.generate_filament_id(material_type)
-        setting_id = self.id_generator.generate_setting_id(material_type, manufacturer)
+            filament_id, derived_setting_id = self.id_generator.derive_ids(name)
+            if setting_id is None:
+                setting_id = derived_setting_id
+        elif setting_id is None:
+            setting_id = self.id_generator.generate_setting_id(material_type, manufacturer)
 
         # Get inheritance base
         inherits = self.template_manager.get_base_profile_name(material_type)

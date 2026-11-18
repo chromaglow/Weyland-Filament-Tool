@@ -72,11 +72,12 @@ class ExportResult:
 
 
 def build_filament_preset(result: MergeResult, name: str, material_type: str, manufacturer: str,
-                          filament_id: Optional[str] = None) -> Dict[str, Any]:
+                          filament_id: Optional[str] = None,
+                          setting_id: Optional[str] = None) -> Dict[str, Any]:
     builder = ProfileBuilder()
     profile = builder.build_profile(name, material_type, manufacturer,
                                     manual_overrides=result.filament_overrides(),
-                                    filament_id=filament_id)
+                                    filament_id=filament_id, setting_id=setting_id)
     ok, errors = profile.validate()
     if not ok:
         raise ValueError(f"Filament profile {name} invalid: {errors}")
@@ -117,12 +118,12 @@ def process_entry(result: MergeResult, name: str) -> Dict[str, Any]:
 
 def export_merged(collected: CollectedSettings, out_dir: Union[str, Path], *, name: str,
                   manufacturer: str, material_type: str = "pla", filament_id: Optional[str] = None,
-                  process_name: Optional[str] = None, config: Optional[MergeConfig] = None,
+                  setting_id: Optional[str] = None, process_name: Optional[str] = None, config: Optional[MergeConfig] = None,
                   generated_at: Optional[str] = None) -> ExportResult:
     config = config or MergeConfig()
     result = merge(collected, config)
 
-    filament = build_filament_preset(result, name, material_type, manufacturer, filament_id)
+    filament = build_filament_preset(result, name, material_type, manufacturer, filament_id, setting_id)
     process = process_entry(result, process_name or f"{name} process") if result.process else None
 
     problems = {"filament": check_keys(filament, "filament")}

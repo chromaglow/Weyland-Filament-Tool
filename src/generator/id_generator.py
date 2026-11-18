@@ -3,7 +3,7 @@ ID generation for Bambu Studio filament profiles
 """
 
 import hashlib
-from typing import Dict, Set
+from typing import Dict, Set, Tuple
 from src.utils.logger import get_logger
 
 logger = get_logger()
@@ -100,6 +100,18 @@ class IDGenerator:
         setting_id = f"{prefix}S{hash_suffix}_{clean_manufacturer}_99"
         self._used_setting_ids.add(setting_id)
         return setting_id
+
+    @staticmethod
+    def derive_ids(name: str) -> Tuple[str, str]:
+        """Stable (filament_id, setting_id) for a preset name.
+
+        "P" + 7 hex digits of a SHA-1 of the name: the same name always gives
+        the same ids, different names differ, and neither can match Bambu's
+        system pattern (G + letters + digits, e.g. GFL99, GFLS00_...).
+        """
+        def code(kind: str) -> str:
+            return "P" + hashlib.sha1(f"{kind}:{name}".encode("utf-8")).hexdigest()[:7]
+        return code("filament_id"), code("setting_id")
 
     def register_existing_id(self, filament_id: str, setting_id: str = None):
         """

@@ -280,3 +280,42 @@ def test_research_report_lists_template_defaults(tmp_path):
     assert "enable_pressure_advance = 1" in section and "filament_deretraction_speed" in section
     n = int(text.split("Assumptions: ")[1].split()[0])
     assert n == section.count("\n- ")
+
+
+SYSTEM_ID = __import__("re").compile(r"^G[A-Z]{1,3}S?\d{2}(_|$)")
+
+
+def _research_ids(tmp_path, name, sub):
+    args = ["research", "--material", "Plant Vitamin", "--manufacturer", "TimePlast",
+            "--source", f"manufacturer={PAGE_URL}", "--source", f"community={COMMUNITY}",
+            "--name", name, "--out", str(tmp_path / sub)]
+    code, text = run(tmp_path, args)
+    assert code == 0, text
+    d = json.loads((tmp_path / sub / f"{name}.json").read_text(encoding="utf-8"))
+    return d["filament_id"], d["setting_id"]
+
+
+def test_research_ids_unique_per_name_stable_and_not_system_pattern(tmp_path):
+    a1 = _research_ids(tmp_path, "Plant Vitamin", "a1")
+    a2 = _research_ids(tmp_path, "Plant Vitamin", "a2")
+    b = _research_ids(tmp_path, "Plant Fire", "b")
+    assert a1 == a2
+    assert a1[0] != b[0] and a1[1] != b[1]
+    for value in (*a1, *b):
+        assert not SYSTEM_ID.match(value), value
+    assert a1[0] != a1[1]
+
+
+def test_import_keeps_own_ids_unless_name_changes(tmp_path):
+    src = FIX / "import" / "bambu_user.json"
+    original = json.loads(src.read_text(encoding="utf-8"))
+    code, text = run(tmp_path, ["import", str(src), "--out", str(tmp_path / "same")])
+    assert code == 0, text
+    same = json.loads((tmp_path / "same" / f"{original['name']}.json").read_text(encoding="utf-8"))
+    if "filament_id" in original:
+        assert same["filament_id"] == original["filament_id"]
+    code, text = run(tmp_path, ["import", str(src), "--name", "Renamed Copy", "--out", str(tmp_path / "ren")])
+    assert code == 0, text
+    ren = json.loads((tmp_path / "ren" / "Renamed Copy.json").read_text(encoding="utf-8"))
+    assert ren["filament_id"] != original.get("filament_id")
+    assert not SYSTEM_ID.match(ren["filament_id"]) and not SYSTEM_ID.match(ren["setting_id"])
